@@ -1,0 +1,47 @@
+# Build outputs
+build/
+bin/
+out/
+dist/
+*.exe
+*.dll
+*.obj
+*.o
+*.a
+*.lib
+
+# CMake artifacts
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+*.ninja
+.ninja_*
+ninja_log
+CMakeUserPresets.json
+
+# Qt Generated Files
+*_autogen/
+moc_*.cpp
+ui_*.h
+qrc_*.cpp
+*.qmlc
+*.jsc
+
+# IDE & Editor files
+.vscode/
+.vs/
+.idea/
+*.user
+*.user.*
+*.suo
+*.userosv
+*.sln.docstates
+
+# Logs and runtime diagnostics
+*.log
+pulseos_diagnostic.log
+pulseos_debug.log
+
+# Local environment shims
+powershell.bat

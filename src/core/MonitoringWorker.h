@@ -1,0 +1,63 @@
+#pragma once
+
+#include <QObject>
+#include <QTimer>
+#include <memory>
+#include <atomic>
+#include <mutex>
+#include "Types.h"
+#include "SystemMonitor.h"
+#include "ProcessMonitor.h"
+#include "TaskDetector.h"
+#include "RecommendationEngine.h"
+#include "strategies/OptimizationStrategy.h"
+
+namespace pulse {
+
+class MonitoringWorker : public QObject {
+    Q_OBJECT
+
+public:
+    MonitoringWorker(std::shared_ptr<SystemMonitor> sysMonitor,
+                     std::shared_ptr<ProcessMonitor> procMonitor,
+                     std::shared_ptr<TaskDetector> taskDetector,
+                     std::shared_ptr<RecommendationEngine> recEngine,
+                     std::shared_ptr<OptimizationStrategy> initialStrategy,
+                     QObject* parent = nullptr);
+    ~MonitoringWorker() override;
+
+public slots:
+    void startMonitoring(uint32_t intervalMs);
+    void stopMonitoring();
+    void setInterval(uint32_t intervalMs);
+    void setActiveStrategy(std::shared_ptr<pulse::OptimizationStrategy> strategy);
+    void triggerImmediateSample();
+
+private slots:
+    void onTimerTimeout();
+
+signals:
+    void dataSampled(const pulse::SystemMetrics& sysMetrics,
+                     const std::vector<pulse::ProcessInfo>& processes,
+                     const pulse::TaskDetectionResult& detection,
+                     const std::vector<pulse::Recommendation>& recommendations);
+    void monitoringError(const QString& errorMessage);
+
+private:
+    void performSample();
+
+    std::shared_ptr<SystemMonitor> m_sysMonitor;
+    std::shared_ptr<ProcessMonitor> m_procMonitor;
+    std::shared_ptr<TaskDetector> m_taskDetector;
+    std::shared_ptr<RecommendationEngine> m_recEngine;
+
+    std::mutex m_strategyMutex;
+    std::shared_ptr<OptimizationStrategy> m_activeStrategy;
+
+    QTimer* m_timer{nullptr};
+    uint32_t m_intervalMs{1000};
+    std::atomic<bool> m_isSampling{false};
+};
+
+} // namespace pulse
+
