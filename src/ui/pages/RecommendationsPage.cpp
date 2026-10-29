@@ -20,13 +20,13 @@ void RecommendationsPage::setupUi() {
     topLayout->setSpacing(10);
 
     auto* titleLabel = new QLabel("System Performance Recommendations", this);
-    titleLabel->setStyleSheet(QString("font-size: 18px; font-weight: 700; color: %1;").arg(Theme::TextPrimary));
+    titleLabel->setStyleSheet(Theme::pageTitleStyleSheet());
     topLayout->addWidget(titleLabel);
 
     topLayout->addStretch();
 
     auto* filterLabel = new QLabel("Filter:", this);
-    filterLabel->setStyleSheet(QString("color: %1; font-weight: 500;").arg(Theme::TextSecondary));
+    filterLabel->setStyleSheet(QString("color: %1; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;").arg(Theme::TextSecondary));
     topLayout->addWidget(filterLabel);
 
     m_filterCombo = new QComboBox(this);
@@ -36,19 +36,17 @@ void RecommendationsPage::setupUi() {
     connect(m_filterCombo, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &RecommendationsPage::onFilterChanged);
     topLayout->addWidget(m_filterCombo);
 
-    m_countLabel = new QLabel("(0 active)", this);
-    m_countLabel->setStyleSheet(QString("color: %1;").arg(Theme::TextMuted));
+    m_countLabel = new QLabel("0 active", this);
+    m_countLabel->setStyleSheet(Theme::pillStyleSheet(Theme::BgSurfaceAlt, Theme::AccentCyan));
     topLayout->addWidget(m_countLabel);
 
     mainLayout->addLayout(topLayout);
 
     // Explanatory Banner
     auto* noticeFrame = new QFrame(this);
-    noticeFrame->setStyleSheet(QString(
-        "QFrame { background-color: %1; border: 1px solid %2; border-radius: 6px; padding: 8px 12px; }"
-    ).arg(Theme::BgSurface).arg(Theme::BorderSubtle));
+    noticeFrame->setStyleSheet(Theme::bannerStyleSheet(Theme::AccentCyan));
     auto* noticeLayout = new QHBoxLayout(noticeFrame);
-    noticeLayout->setContentsMargins(0, 0, 0, 0);
+    noticeLayout->setContentsMargins(14, 10, 14, 10);
 
     auto* noticeText = new QLabel("Rule-based analysis clearly distinguishes <b>measured observations</b> from <b>diagnostic hypotheses</b>. Actions require explicit confirmation in the Safe Action Center.", noticeFrame);
     noticeText->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Theme::TextSecondary));

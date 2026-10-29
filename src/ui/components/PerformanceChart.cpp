@@ -26,9 +26,9 @@ void PerformanceChart::paintEvent(QPaintEvent* /*event*/) {
 
     const int w = width();
     const int h = height();
-    const int topPadding = 30;
-    const int bottomPadding = 20;
-    const int leftPadding = 36;
+    const int topPadding = 32;
+    const int bottomPadding = 24;
+    const int leftPadding = 38;
     const int rightPadding = 16;
 
     const int plotW = w - leftPadding - rightPadding;
@@ -44,29 +44,35 @@ void PerformanceChart::paintEvent(QPaintEvent* /*event*/) {
     // Header Title
     painter.setFont(QFont("Segoe UI", 9, QFont::DemiBold));
     painter.setPen(QColor(Theme::TextSecondary));
-    painter.drawText(16, 20, m_title);
+    painter.drawText(16, 22, m_title);
 
     // Current Value badge in top right
     QString valStr = QString::number(m_currentVal, 'f', 1) + m_unit;
     painter.setFont(QFont("Segoe UI", 10, QFont::Bold));
     painter.setPen(m_lineColor);
-    painter.drawText(w - rightPadding - 80, 20, 80, 20, Qt::AlignRight, valStr);
+    painter.drawText(w - rightPadding - 90, 8, 90, 20, Qt::AlignRight | Qt::AlignVCenter, valStr);
 
     // Grid lines (0%, 25%, 50%, 75%, 100%)
     painter.setFont(QFont("Segoe UI", 8));
-    painter.setPen(QPen(QColor(Theme::BorderSubtle), 1, Qt::DotLine));
+    const QColor gridColor(39, 46, 63, 160); // Restrained subtle gridline
 
     const int steps = 4;
     for (int i = 0; i <= steps; ++i) {
         int y = topPadding + (plotH * (steps - i)) / steps;
+        painter.setPen(QPen(gridColor, 1));
         painter.drawLine(leftPadding, y, w - rightPadding, y);
 
         // Y-axis label
         painter.setPen(QColor(Theme::TextMuted));
         int labelVal = static_cast<int>((m_maxScale * i) / steps);
         painter.drawText(4, y - 6, leftPadding - 8, 14, Qt::AlignRight, QString::number(labelVal));
-        painter.setPen(QPen(QColor(Theme::BorderSubtle), 1, Qt::DotLine));
     }
+
+    // X-axis time indicator labels
+    painter.setFont(QFont("Segoe UI", 7));
+    painter.setPen(QColor(Theme::TextMuted));
+    painter.drawText(leftPadding, topPadding + plotH + 4, 60, 14, Qt::AlignLeft, "60s ago");
+    painter.drawText(w - rightPadding - 60, topPadding + plotH + 4, 60, 14, Qt::AlignRight, "Now");
 
     if (m_data.empty()) return;
 
@@ -96,30 +102,38 @@ void PerformanceChart::paintEvent(QPaintEvent* /*event*/) {
     areaPath.lineTo(leftPadding + (count - 1) * xStep, topPadding + plotH);
     areaPath.closeSubpath();
 
-    // Fill gradient
+    // Fill subtle gradient
     QLinearGradient grad(0, topPadding, 0, topPadding + plotH);
     QColor startGrad = m_lineColor;
-    startGrad.setAlpha(60);
+    startGrad.setAlpha(40);
     QColor endGrad = m_lineColor;
-    endGrad.setAlpha(5);
+    endGrad.setAlpha(3);
     grad.setColorAt(0.0, startGrad);
     grad.setColorAt(1.0, endGrad);
 
     painter.fillPath(areaPath, grad);
 
-    // Draw main plot line
-    QPen linePen(m_lineColor, 2.0);
+    // Draw main plot line (crisp 1.8px)
+    QPen linePen(m_lineColor, 1.8);
     linePen.setCapStyle(Qt::RoundCap);
     linePen.setJoinStyle(Qt::RoundJoin);
     painter.setPen(linePen);
     painter.drawPolyline(polyline);
 
-    // Draw pulsating indicator on latest point
+    // Draw technical halo pip on latest point
     if (!polyline.isEmpty()) {
         QPointF lastPt = polyline.last();
+        // Outer halo
+        QColor haloColor = m_lineColor;
+        haloColor.setAlpha(60);
+        painter.setBrush(haloColor);
+        painter.setPen(Qt::NoPen);
+        painter.drawEllipse(lastPt, 5.0, 5.0);
+
+        // Inner solid core
         painter.setBrush(m_lineColor);
-        painter.setPen(QPen(Qt::white, 1.5));
-        painter.drawEllipse(lastPt, 3.5, 3.5);
+        painter.setPen(QPen(QColor(Theme::BgWindow), 1.0));
+        painter.drawEllipse(lastPt, 2.5, 2.5);
     }
 }
 

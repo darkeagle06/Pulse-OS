@@ -21,7 +21,7 @@ void AnalysisPage::setupUi() {
     // Header & Explanation
     auto* topLayout = new QHBoxLayout();
     auto* titleLabel = new QLabel("Before & After Performance Analysis", this);
-    titleLabel->setStyleSheet(QString("font-size: 18px; font-weight: 700; color: %1;").arg(Theme::TextPrimary));
+    titleLabel->setStyleSheet(Theme::pageTitleStyleSheet());
     topLayout->addWidget(titleLabel);
 
     topLayout->addStretch();
@@ -48,11 +48,9 @@ void AnalysisPage::setupUi() {
 
     // Methodology Explanatory Frame
     auto* methodFrame = new QFrame(this);
-    methodFrame->setStyleSheet(QString(
-        "QFrame { background-color: %1; border: 1px solid %2; border-radius: 6px; padding: 10px 14px; }"
-    ).arg(Theme::BgSurface).arg(Theme::BorderSubtle));
+    methodFrame->setStyleSheet(Theme::bannerStyleSheet(Theme::AccentCyan));
     auto* methodLayout = new QVBoxLayout(methodFrame);
-    methodLayout->setContentsMargins(0, 0, 0, 0);
+    methodLayout->setContentsMargins(14, 10, 14, 10);
     methodLayout->setSpacing(4);
 
     auto* methodText = new QLabel(
@@ -71,16 +69,14 @@ void AnalysisPage::setupUi() {
 
     auto createSnapBox = [](const QString& headerTitle, QLabel*& statusLbl, QLabel*& cpuLbl, QLabel*& ramLbl, QLabel*& procLbl, QWidget* parent) -> QFrame* {
         auto* frame = new QFrame(parent);
-        frame->setStyleSheet(QString(
-            "QFrame { background-color: %1; border: 1px solid %2; border-radius: 8px; padding: 14px; }"
-        ).arg(Theme::BgSurface).arg(Theme::BorderSubtle));
+        frame->setStyleSheet(Theme::panelStyleSheet(8));
 
         auto* layout = new QVBoxLayout(frame);
-        layout->setContentsMargins(0, 0, 0, 0);
+        layout->setContentsMargins(16, 14, 16, 14);
         layout->setSpacing(8);
 
         auto* title = new QLabel(headerTitle, frame);
-        title->setStyleSheet(QString("font-size: 14px; font-weight: 700; color: %1;").arg(Theme::AccentBlue));
+        title->setStyleSheet(QString("font-size: 13px; font-weight: 700; color: %1;").arg(Theme::AccentCyan));
         layout->addWidget(title);
 
         statusLbl = new QLabel("Not yet captured", frame);
@@ -119,16 +115,14 @@ void AnalysisPage::setupUi() {
 
     // Delta & Verification Card
     auto* deltaFrame = new QFrame(this);
-    deltaFrame->setStyleSheet(QString(
-        "QFrame { background-color: %1; border: 1px solid %2; border-radius: 8px; padding: 16px; }"
-    ).arg(Theme::BgSurface).arg(Theme::BorderSubtle));
+    deltaFrame->setStyleSheet(Theme::panelStyleSheet(8));
 
     auto* deltaLayout = new QVBoxLayout(deltaFrame);
-    deltaLayout->setContentsMargins(0, 0, 0, 0);
+    deltaLayout->setContentsMargins(16, 14, 16, 14);
     deltaLayout->setSpacing(10);
 
     auto* deltaHeader = new QLabel("Observed Measured Deltas & Comparability", deltaFrame);
-    deltaHeader->setStyleSheet(QString("font-size: 15px; font-weight: 700; color: %1;").arg(Theme::AccentPurple));
+    deltaHeader->setStyleSheet(Theme::sectionTitleStyleSheet());
     deltaLayout->addWidget(deltaHeader);
 
     auto* deltasRow = new QHBoxLayout();

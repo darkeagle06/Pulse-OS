@@ -131,23 +131,21 @@ void MainWindow::setupUi() {
 QWidget* MainWindow::createSidebar() {
     auto* sidebar = new QWidget(this);
     sidebar->setObjectName("sidebarWidget");
-    sidebar->setFixedWidth(240);
+    sidebar->setFixedWidth(230);
 
     auto* layout = new QVBoxLayout(sidebar);
     layout->setContentsMargins(14, 20, 14, 20);
-    layout->setSpacing(8);
+    layout->setSpacing(6);
 
     // Brand Title
-    auto* logoLayout = new QHBoxLayout();
     auto* brandLabel = new QLabel("PULSE<b>OS</b>", sidebar);
-    brandLabel->setStyleSheet(QString("font-size: 19px; font-weight: 700; color: %1; letter-spacing: 1px;")
-        .arg(Theme::AccentBlue));
-    logoLayout->addWidget(brandLabel);
-    logoLayout->addStretch();
-    layout->addLayout(logoLayout);
+    brandLabel->setStyleSheet(QString("font-size: 19px; font-weight: 800; color: %1; letter-spacing: 1.5px; padding-left: 6px;")
+        .arg(Theme::AccentCyan));
+    layout->addWidget(brandLabel);
 
-    auto* subLabel = new QLabel("Adaptive CPU Assistant", sidebar);
-    subLabel->setStyleSheet(QString("font-size: 11px; color: %1; margin-bottom: 16px;").arg(Theme::TextMuted));
+    auto* subLabel = new QLabel("ADAPTIVE CPU ASSISTANT", sidebar);
+    subLabel->setStyleSheet(QString("font-size: 10px; font-weight: 600; color: %1; letter-spacing: 0.8px; margin-bottom: 16px; padding-left: 6px;")
+        .arg(Theme::TextMuted));
     layout->addWidget(subLabel);
 
     // Navigation buttons
@@ -155,12 +153,12 @@ QWidget* MainWindow::createSidebar() {
     m_sidebarGroup->setExclusive(true);
 
     const struct { int id; const char* label; } navItems[] = {
-        {0, "  Dashboard"},
-        {1, "  Process Explorer"},
-        {2, "  Workload Profiles"},
-        {3, "  Recommendations"},
-        {4, "  Performance Analysis"},
-        {5, "  Settings & Privacy"}
+        {0, "  ▣   Dashboard"},
+        {1, "  ☲   Process Explorer"},
+        {2, "  ◈   Workload Profiles"},
+        {3, "  ◇   Recommendations"},
+        {4, "  ▲   Performance Analysis"},
+        {5, "  ⚙   Settings & Privacy"}
     };
 
     for (const auto& item : navItems) {
@@ -178,8 +176,8 @@ QWidget* MainWindow::createSidebar() {
     layout->addStretch();
 
     // Footer info
-    auto* footer = new QLabel("Windows 10/11 64-bit\nv1.0.0", sidebar);
-    footer->setStyleSheet(QString("font-size: 11px; color: %1; padding-left: 6px;").arg(Theme::TextMuted));
+    auto* footer = new QLabel("Windows 10/11 64-bit\nv1.0.0 Production", sidebar);
+    footer->setStyleSheet(QString("font-size: 10px; color: %1; padding-left: 6px; line-height: 1.3;").arg(Theme::TextMuted));
     layout->addWidget(footer);
 
     return sidebar;
@@ -187,20 +185,21 @@ QWidget* MainWindow::createSidebar() {
 
 QWidget* MainWindow::createTopBar() {
     auto* topBar = new QFrame(this);
-    topBar->setStyleSheet(QString(
-        "QFrame { background-color: %1; border: 1px solid %2; border-radius: 8px; padding: 6px 14px; }"
-    ).arg(Theme::BgSurface).arg(Theme::BorderSubtle));
+    topBar->setStyleSheet(Theme::panelStyleSheet(8));
 
     auto* layout = new QHBoxLayout(topBar);
-    layout->setContentsMargins(10, 4, 10, 4);
-    layout->setSpacing(12);
+    layout->setContentsMargins(12, 5, 12, 5);
+    layout->setSpacing(10);
+
+    // Monitoring Status Indicator
+    m_statusPill = new QLabel("● LIVE", topBar);
+    m_statusPill->setStyleSheet(Theme::pillStyleSheet(Theme::BgSurfaceAlt, Theme::AccentGreen));
+    layout->addWidget(m_statusPill);
 
     // Active Profile Pill
     std::string profName = m_activeStrategy ? m_activeStrategy->getProfileName() : "Coding & Development";
     m_activeProfilePill = new QLabel("Profile: " + QString::fromStdString(profName), topBar);
-    m_activeProfilePill->setStyleSheet(QString(
-        "background-color: %1; color: %2; border: 1px solid %3; border-radius: 12px; padding: 4px 10px; font-weight: 600; font-size: 11px;"
-    ).arg(Theme::BgSurfaceAlt).arg(Theme::AccentPurple).arg(Theme::BorderSubtle));
+    m_activeProfilePill->setStyleSheet(Theme::pillStyleSheet(Theme::BgSurfaceAlt, Theme::AccentPurple));
     layout->addWidget(m_activeProfilePill);
 
     layout->addStretch();
@@ -215,24 +214,13 @@ QWidget* MainWindow::createTopBar() {
 
     // Quick CPU Pill
     m_cpuQuickPill = new QLabel("CPU: --%", topBar);
-    m_cpuQuickPill->setStyleSheet(QString(
-        "background-color: %1; color: %2; border-radius: 12px; padding: 4px 10px; font-weight: 600; font-size: 11px;"
-    ).arg(Theme::BgSurfaceAlt).arg(Theme::AccentBlue));
+    m_cpuQuickPill->setStyleSheet(Theme::pillStyleSheet(Theme::BgSurfaceAlt, Theme::AccentCyan));
     layout->addWidget(m_cpuQuickPill);
 
     // Quick RAM Pill
     m_ramQuickPill = new QLabel("RAM: --%", topBar);
-    m_ramQuickPill->setStyleSheet(QString(
-        "background-color: %1; color: %2; border-radius: 12px; padding: 4px 10px; font-weight: 600; font-size: 11px;"
-    ).arg(Theme::BgSurfaceAlt).arg(Theme::AccentGreen));
+    m_ramQuickPill->setStyleSheet(Theme::pillStyleSheet(Theme::BgSurfaceAlt, Theme::AccentGreen));
     layout->addWidget(m_ramQuickPill);
-
-    // Monitoring Status Indicator
-    m_statusPill = new QLabel("● Live", topBar);
-    m_statusPill->setStyleSheet(QString(
-        "color: %1; font-weight: 600; font-size: 12px; padding-left: 6px;"
-    ).arg(Theme::AccentGreen));
-    layout->addWidget(m_statusPill);
 
     return topBar;
 }

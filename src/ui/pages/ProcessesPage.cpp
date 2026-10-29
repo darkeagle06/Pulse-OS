@@ -20,11 +20,11 @@ void ProcessesPage::setupUi() {
     // Top Header & Summary
     auto* headerLayout = new QHBoxLayout();
     auto* titleLabel = new QLabel("Windows Process Explorer", this);
-    titleLabel->setStyleSheet(QString("font-size: 18px; font-weight: 700; color: %1;").arg(Theme::TextPrimary));
+    titleLabel->setStyleSheet(Theme::pageTitleStyleSheet());
     headerLayout->addWidget(titleLabel);
 
     m_summaryLabel = new QLabel("Scanning active processes...", this);
-    m_summaryLabel->setStyleSheet(QString("color: %1;").arg(Theme::TextSecondary));
+    m_summaryLabel->setStyleSheet(Theme::pillStyleSheet(Theme::BgSurfaceAlt, Theme::TextSecondary));
     headerLayout->addWidget(m_summaryLabel, 0, Qt::AlignRight);
 
     mainLayout->addLayout(headerLayout);
@@ -35,16 +35,14 @@ void ProcessesPage::setupUi() {
 
     // Process Details Inspector Panel (bottom)
     m_detailsPanel = new QFrame(this);
-    m_detailsPanel->setStyleSheet(QString(
-        "QFrame { background-color: %1; border: 1px solid %2; border-radius: 8px; padding: 12px 16px; }"
-    ).arg(Theme::BgSurface).arg(Theme::BorderSubtle));
+    m_detailsPanel->setStyleSheet(Theme::panelStyleSheet(8));
 
     auto* detailsLayout = new QVBoxLayout(m_detailsPanel);
-    detailsLayout->setContentsMargins(0, 0, 0, 0);
+    detailsLayout->setContentsMargins(16, 14, 16, 14);
     detailsLayout->setSpacing(8);
 
     auto* panelTitle = new QLabel("Process Inspection & Diagnostics", m_detailsPanel);
-    panelTitle->setStyleSheet(QString("font-size: 13px; font-weight: 600; color: %1;").arg(Theme::AccentBlue));
+    panelTitle->setStyleSheet(Theme::sectionTitleStyleSheet());
     detailsLayout->addWidget(panelTitle);
 
     auto* grid = new QGridLayout();

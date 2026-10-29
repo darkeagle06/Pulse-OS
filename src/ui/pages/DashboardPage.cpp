@@ -19,23 +19,21 @@ void DashboardPage::setupUi() {
 
     // 1. Hardware Info Banner
     auto* hwFrame = new QFrame(this);
-    hwFrame->setStyleSheet(QString(
-        "QFrame { background-color: %1; border: 1px solid %2; border-radius: 8px; padding: 10px 16px; }"
-    ).arg(Theme::BgSurface).arg(Theme::BorderSubtle));
+    hwFrame->setStyleSheet(Theme::bannerStyleSheet(Theme::AccentCyan));
     auto* hwLayout = new QHBoxLayout(hwFrame);
-    hwLayout->setContentsMargins(0, 0, 0, 0);
+    hwLayout->setContentsMargins(14, 10, 14, 10);
     hwLayout->setSpacing(24);
 
     m_cpuModelLabel = new QLabel("Processor: Querying...", hwFrame);
-    m_cpuModelLabel->setStyleSheet(QString("font-weight: 600; color: %1;").arg(Theme::TextPrimary));
+    m_cpuModelLabel->setStyleSheet(QString("font-weight: 600; font-size: 12px; color: %1;").arg(Theme::TextPrimary));
     hwLayout->addWidget(m_cpuModelLabel);
 
     m_coresLabel = new QLabel("Cores: --", hwFrame);
-    m_coresLabel->setStyleSheet(QString("color: %1;").arg(Theme::TextSecondary));
+    m_coresLabel->setStyleSheet(QString("font-size: 12px; color: %1;").arg(Theme::TextSecondary));
     hwLayout->addWidget(m_coresLabel);
 
     m_totalRamLabel = new QLabel("Physical RAM: -- GB", hwFrame);
-    m_totalRamLabel->setStyleSheet(QString("color: %1;").arg(Theme::TextSecondary));
+    m_totalRamLabel->setStyleSheet(QString("font-size: 12px; color: %1;").arg(Theme::TextSecondary));
     hwLayout->addWidget(m_totalRamLabel);
 
     hwLayout->addStretch();
@@ -65,7 +63,7 @@ void DashboardPage::setupUi() {
     auto* chartsLayout = new QHBoxLayout();
     chartsLayout->setSpacing(12);
 
-    m_cpuChart = new PerformanceChart("CPU Utilization History (Last 60s)", Theme::colorAccentBlue(), this);
+    m_cpuChart = new PerformanceChart("CPU Utilization History (Last 60s)", Theme::colorAccentCyan(), this);
     chartsLayout->addWidget(m_cpuChart, 1);
 
     m_ramChart = new PerformanceChart("RAM Utilization History (Last 60s)", Theme::colorAccentGreen(), this);
@@ -74,9 +72,8 @@ void DashboardPage::setupUi() {
     mainLayout->addLayout(chartsLayout);
 
     // 4. Top Resource Consuming Processes Section
-    auto* topHeader = new QLabel("Active Processes with Highest Resource Utilization", this);
-    topHeader->setStyleSheet(QString("font-size: 14px; font-weight: 600; color: %1; margin-top: 6px;")
-        .arg(Theme::TextPrimary));
+    auto* topHeader = new QLabel("Top Resource Consuming Processes", this);
+    topHeader->setStyleSheet(Theme::sectionTitleStyleSheet());
     mainLayout->addWidget(topHeader);
 
     m_topProcessesTable = new ProcessTableView(this);

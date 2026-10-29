@@ -23,12 +23,12 @@ void ProcessTableView::setupUi() {
     controlsLayout->setSpacing(10);
 
     m_searchBox = new QLineEdit(this);
-    m_searchBox->setPlaceholderText("Search by process name or PID...");
+    m_searchBox->setPlaceholderText("Filter processes by name or PID...");
     m_searchBox->setClearButtonEnabled(true);
     controlsLayout->addWidget(m_searchBox, 1);
 
     auto* sortLabel = new QLabel("Sort by:", this);
-    sortLabel->setStyleSheet(QString("color: %1; font-weight: 500;").arg(Theme::TextSecondary));
+    sortLabel->setStyleSheet(QString("color: %1; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;").arg(Theme::TextSecondary));
     controlsLayout->addWidget(sortLabel);
 
     m_sortCombo = new QComboBox(this);
@@ -59,6 +59,7 @@ void ProcessTableView::setupUi() {
     m_table->setSelectionMode(QAbstractItemView::SingleSelection);
     m_table->setEditTriggers(QAbstractItemView::NoEditTriggers);
     m_table->verticalHeader()->setVisible(false);
+    m_table->verticalHeader()->setDefaultSectionSize(30);
     m_table->setShowGrid(false);
     m_table->setAlternatingRowColors(true);
 
@@ -141,19 +142,19 @@ void ProcessTableView::renderTable() {
         QColor statusColor;
         switch (p.accessStatus) {
             case ProcessAccessStatus::Accessible:
-                statusStr = "Accessible";
+                statusStr = "● Accessible";
                 statusColor = Theme::colorAccentGreen();
                 break;
             case ProcessAccessStatus::AccessDenied:
-                statusStr = "Restricted (Access Denied)";
+                statusStr = "▲ Restricted";
                 statusColor = Theme::colorAccentAmber();
                 break;
             case ProcessAccessStatus::SystemProtected:
-                statusStr = "System Protected";
+                statusStr = "■ Protected";
                 statusColor = QColor(Theme::TextMuted);
                 break;
             default:
-                statusStr = "Unknown";
+                statusStr = "—";
                 statusColor = QColor(Theme::TextMuted);
                 break;
         }

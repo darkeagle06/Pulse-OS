@@ -29,28 +29,28 @@ SettingsPage::SettingsPage(
 void SettingsPage::setupUi() {
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
-    mainLayout->setSpacing(16);
+    mainLayout->setSpacing(14);
 
     // Title
     auto* titleLabel = new QLabel("Preferences & Performance Reporting", this);
-    titleLabel->setStyleSheet(QString("font-size: 18px; font-weight: 700; color: %1;").arg(Theme::TextPrimary));
+    titleLabel->setStyleSheet(Theme::pageTitleStyleSheet());
     mainLayout->addWidget(titleLabel);
 
     // 1. Monitoring Controls Frame
     auto* monFrame = new QFrame(this);
-    monFrame->setStyleSheet(QString(
-        "QFrame { background-color: %1; border: 1px solid %2; border-radius: 8px; padding: 14px 18px; }"
-    ).arg(Theme::BgSurface).arg(Theme::BorderSubtle));
+    monFrame->setStyleSheet(Theme::panelStyleSheet(8));
     auto* monLayout = new QVBoxLayout(monFrame);
-    monLayout->setContentsMargins(0, 0, 0, 0);
+    monLayout->setContentsMargins(16, 14, 16, 14);
     monLayout->setSpacing(10);
 
     auto* monTitle = new QLabel("Telemetry & Sampling Rate", monFrame);
-    monTitle->setStyleSheet(QString("font-size: 14px; font-weight: 700; color: %1;").arg(Theme::AccentBlue));
+    monTitle->setStyleSheet(Theme::sectionTitleStyleSheet());
     monLayout->addWidget(monTitle);
 
     auto* sliderLayout = new QHBoxLayout();
-    sliderLayout->addWidget(new QLabel("Sampling Frequency:", monFrame));
+    auto* freqLabel = new QLabel("Sampling Frequency:", monFrame);
+    freqLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Theme::TextSecondary));
+    sliderLayout->addWidget(freqLabel);
 
     m_intervalSlider = new QSlider(Qt::Horizontal, monFrame);
     m_intervalSlider->setRange(500, 5000);
@@ -81,24 +81,24 @@ void SettingsPage::setupUi() {
 
     // 2. Automation & Startup Frame
     auto* autoFrame = new QFrame(this);
-    autoFrame->setStyleSheet(QString(
-        "QFrame { background-color: %1; border: 1px solid %2; border-radius: 8px; padding: 14px 18px; }"
-    ).arg(Theme::BgSurface).arg(Theme::BorderSubtle));
+    autoFrame->setStyleSheet(Theme::panelStyleSheet(8));
     auto* autoLayout = new QVBoxLayout(autoFrame);
-    autoLayout->setContentsMargins(0, 0, 0, 0);
+    autoLayout->setContentsMargins(16, 14, 16, 14);
     autoLayout->setSpacing(10);
 
     auto* autoTitle = new QLabel("Adaptive Automation & Startup", autoFrame);
-    autoTitle->setStyleSheet(QString("font-size: 14px; font-weight: 700; color: %1;").arg(Theme::AccentPurple));
+    autoTitle->setStyleSheet(Theme::sectionTitleStyleSheet());
     autoLayout->addWidget(autoTitle);
 
     m_autoDetectCheckbox = new QCheckBox("Enable Automatic Workload Detection", autoFrame);
     m_autoDetectCheckbox->setChecked(m_settings ? m_settings->isAutoProfileDetectionEnabled() : true);
+    m_autoDetectCheckbox->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Theme::TextPrimary));
     connect(m_autoDetectCheckbox, &QCheckBox::toggled, this, &SettingsPage::onAutoDetectToggled);
     autoLayout->addWidget(m_autoDetectCheckbox);
 
     m_startupCheckbox = new QCheckBox("Launch PulseOS on Windows Startup (Disabled by default)", autoFrame);
     m_startupCheckbox->setChecked(m_settings ? m_settings->isLaunchOnStartupEnabled() : false);
+    m_startupCheckbox->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Theme::TextPrimary));
     connect(m_startupCheckbox, &QCheckBox::toggled, this, &SettingsPage::onStartupToggled);
     autoLayout->addWidget(m_startupCheckbox);
 
@@ -106,27 +106,26 @@ void SettingsPage::setupUi() {
 
     // 3. Privacy & Transparency Statement
     auto* privFrame = new QFrame(this);
-    privFrame->setStyleSheet(QString(
-        "QFrame { background-color: %1; border: 1px solid %2; border-radius: 8px; padding: 14px 18px; }"
-    ).arg(Theme::BgSurface).arg(Theme::BorderSubtle));
+    privFrame->setStyleSheet(Theme::panelStyleSheet(8));
     auto* privLayout = new QVBoxLayout(privFrame);
-    privLayout->setContentsMargins(0, 0, 0, 0);
+    privLayout->setContentsMargins(16, 14, 16, 14);
     privLayout->setSpacing(8);
 
     auto* privTitle = new QLabel("Privacy & Data Transparency", privFrame);
-    privTitle->setStyleSheet(QString("font-size: 14px; font-weight: 700; color: %1;").arg(Theme::AccentGreen));
+    privTitle->setStyleSheet(Theme::sectionTitleStyleSheet());
     privLayout->addWidget(privTitle);
 
     auto* privText = new QLabel(
         "🛡 <b>Local Execution Only:</b> PulseOS inspects system performance exclusively on your machine using documented "
         "Windows APIs (Toolhelp32, GetSystemTimes, GlobalMemoryStatusEx). No metrics, process names, or window titles are transmitted "
         "to external cloud servers.", privFrame);
-    privText->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Theme::TextSecondary));
+    privText->setStyleSheet(QString("color: %1; font-size: 12px; line-height: 1.4;").arg(Theme::TextSecondary));
     privText->setWordWrap(true);
     privLayout->addWidget(privText);
 
     m_privacyCheckbox = new QCheckBox("Transparent Local Collection Mode Active", privFrame);
     m_privacyCheckbox->setChecked(m_settings ? m_settings->isDataCollectionTransparent() : true);
+    m_privacyCheckbox->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Theme::TextPrimary));
     connect(m_privacyCheckbox, &QCheckBox::toggled, this, &SettingsPage::onPrivacyToggled);
     privLayout->addWidget(m_privacyCheckbox);
 
@@ -134,15 +133,13 @@ void SettingsPage::setupUi() {
 
     // 4. Audit Export Frame
     auto* exportFrame = new QFrame(this);
-    exportFrame->setStyleSheet(QString(
-        "QFrame { background-color: %1; border: 1px solid %2; border-radius: 8px; padding: 14px 18px; }"
-    ).arg(Theme::BgSurface).arg(Theme::BorderSubtle));
+    exportFrame->setStyleSheet(Theme::panelStyleSheet(8));
     auto* exportLayout = new QVBoxLayout(exportFrame);
-    exportLayout->setContentsMargins(0, 0, 0, 0);
+    exportLayout->setContentsMargins(16, 14, 16, 14);
     exportLayout->setSpacing(10);
 
     auto* exportTitle = new QLabel("Performance Audit & Data Export", exportFrame);
-    exportTitle->setStyleSheet(QString("font-size: 14px; font-weight: 700; color: %1;").arg(Theme::TextPrimary));
+    exportTitle->setStyleSheet(Theme::sectionTitleStyleSheet());
     exportLayout->addWidget(exportTitle);
 
     auto* btnRow = new QHBoxLayout();

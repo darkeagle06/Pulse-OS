@@ -26,10 +26,7 @@ void ActionConfirmDialog::setupUi() {
     // Title & Badge
     auto* headerLayout = new QHBoxLayout();
     auto* shieldBadge = new QLabel("🛡 SAFE ACTION PREVIEW", this);
-    shieldBadge->setStyleSheet(QString(
-        "background-color: %1; color: %2; font-size: 11px; font-weight: 700; "
-        "border-radius: 4px; padding: 4px 8px;"
-    ).arg(Theme::BgSurfaceAlt).arg(Theme::AccentGreen));
+    shieldBadge->setStyleSheet(Theme::pillStyleSheet(Theme::BgSurfaceAlt, Theme::AccentGreen));
     headerLayout->addWidget(shieldBadge);
     headerLayout->addStretch();
     layout->addLayout(headerLayout);
@@ -40,38 +37,42 @@ void ActionConfirmDialog::setupUi() {
     layout->addWidget(titleLabel);
 
     auto* descLabel = new QLabel(QString::fromStdString(m_action.description), this);
-    descLabel->setStyleSheet(QString("font-size: 13px; color: %1;").arg(Theme::TextSecondary));
+    descLabel->setStyleSheet(QString("font-size: 13px; color: %1; line-height: 1.4;").arg(Theme::TextSecondary));
     descLabel->setWordWrap(true);
     layout->addWidget(descLabel);
 
     // Details Frame
     auto* detailsFrame = new QFrame(this);
-    detailsFrame->setStyleSheet(QString(
-        "QFrame { background-color: %1; border: 1px solid %2; border-radius: 6px; padding: 12px; }"
-    ).arg(Theme::BgSurface).arg(Theme::BorderSubtle));
+    detailsFrame->setStyleSheet(Theme::panelStyleSheet(8));
 
     auto* detailsLayout = new QVBoxLayout(detailsFrame);
-    detailsLayout->setContentsMargins(0, 0, 0, 0);
-    detailsLayout->setSpacing(8);
+    detailsLayout->setContentsMargins(14, 14, 14, 14);
+    detailsLayout->setSpacing(10);
 
     auto* impactLabel = new QLabel(
-        QString("<span style='color:%1; font-weight:600;'>Expected Impact:</span> %2")
-            .arg(Theme::AccentBlue)
+        QString("<span style='color:%1; font-weight:600;'>Expected Impact:</span> "
+                "<span style='color:%2;'>%3</span>")
+            .arg(Theme::AccentCyan)
+            .arg(Theme::TextPrimary)
             .arg(QString::fromStdString(m_action.expectedImpact)), detailsFrame);
     impactLabel->setWordWrap(true);
     detailsLayout->addWidget(impactLabel);
 
     auto* rollbackLabel = new QLabel(
-        QString("<span style='color:%1; font-weight:600;'>Rollback Support:</span> %2")
+        QString("<span style='color:%1; font-weight:600;'>Rollback Support:</span> "
+                "<span style='color:%2;'>%3</span>")
             .arg(Theme::AccentGreen)
+            .arg(Theme::TextSecondary)
             .arg(m_action.canRollback ? QString::fromStdString(m_action.rollbackDescription) : "Automatic dynamic restoration by Windows."),
         detailsFrame);
     rollbackLabel->setWordWrap(true);
     detailsLayout->addWidget(rollbackLabel);
 
     auto* safetyLabel = new QLabel(
-        QString("<span style='color:%1; font-weight:600;'>Safety Guarantee:</span> Uses documented Windows APIs only. No kernel tampering, no critical service alteration.")
-            .arg(Theme::AccentPurple), detailsFrame);
+        QString("<span style='color:%1; font-weight:600;'>Safety Guarantee:</span> "
+                "<span style='color:%2;'>Uses documented Windows APIs only. No kernel tampering, no critical service alteration.</span>")
+            .arg(Theme::AccentPurple)
+            .arg(Theme::TextSecondary), detailsFrame);
     safetyLabel->setWordWrap(true);
     detailsLayout->addWidget(safetyLabel);
 
@@ -81,6 +82,7 @@ void ActionConfirmDialog::setupUi() {
 
     // Dialog buttons: Cancel & Confirm
     auto* btnLayout = new QHBoxLayout();
+    btnLayout->setSpacing(10);
     btnLayout->addStretch();
 
     auto* cancelBtn = new QPushButton("Cancel", this);

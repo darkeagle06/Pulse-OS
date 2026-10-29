@@ -27,24 +27,22 @@ void ProfilesPage::setupUi() {
 
     // 1. Task Detection Banner
     auto* bannerFrame = new QFrame(this);
-    bannerFrame->setStyleSheet(QString(
-        "QFrame { background-color: %1; border: 1px solid %2; border-radius: 8px; padding: 14px 18px; }"
-    ).arg(Theme::BgSurface).arg(Theme::BorderSubtle));
+    bannerFrame->setStyleSheet(Theme::bannerStyleSheet(Theme::AccentPurple));
 
     auto* bannerLayout = new QVBoxLayout(bannerFrame);
-    bannerLayout->setContentsMargins(0, 0, 0, 0);
+    bannerLayout->setContentsMargins(16, 14, 16, 14);
     bannerLayout->setSpacing(8);
 
     auto* topRow = new QHBoxLayout();
     auto* bannerTitle = new QLabel("Adaptive Workload Detection", bannerFrame);
-    bannerTitle->setStyleSheet(QString("font-size: 14px; font-weight: 700; color: %1;").arg(Theme::AccentBlue));
+    bannerTitle->setStyleSheet(Theme::sectionTitleStyleSheet());
     topRow->addWidget(bannerTitle);
 
     topRow->addStretch();
 
     m_autoDetectCheckbox = new QCheckBox("Auto-Apply Detected Profile", bannerFrame);
     m_autoDetectCheckbox->setChecked(m_settings ? m_settings->isAutoProfileDetectionEnabled() : true);
-    m_autoDetectCheckbox->setStyleSheet(QString("color: %1; font-weight: 500;").arg(Theme::TextPrimary));
+    m_autoDetectCheckbox->setStyleSheet(QString("color: %1; font-weight: 500; font-size: 12px;").arg(Theme::TextPrimary));
     connect(m_autoDetectCheckbox, &QCheckBox::toggled, this, &ProfilesPage::onAutoDetectToggled);
     topRow->addWidget(m_autoDetectCheckbox);
 
@@ -61,15 +59,19 @@ void ProfilesPage::setupUi() {
     detectRow->addStretch();
 
     m_confidenceLabel = new QLabel("Confidence: --%", bannerFrame);
-    m_confidenceLabel->setStyleSheet(QString("font-size: 12px; color: %1;").arg(Theme::TextSecondary));
+    m_confidenceLabel->setStyleSheet(QString("font-size: 11px; color: %1;").arg(Theme::TextSecondary));
     detectRow->addWidget(m_confidenceLabel);
 
     m_confidenceBar = new QProgressBar(bannerFrame);
     m_confidenceBar->setRange(0, 100);
     m_confidenceBar->setValue(0);
     m_confidenceBar->setFixedWidth(120);
-    m_confidenceBar->setFixedHeight(8);
+    m_confidenceBar->setFixedHeight(4);
     m_confidenceBar->setTextVisible(false);
+    m_confidenceBar->setStyleSheet(QString(
+        "QProgressBar { background-color: %1; border: none; border-radius: 2px; }"
+        "QProgressBar::chunk { background-color: %2; border-radius: 2px; }"
+    ).arg(Theme::BgSurfaceAlt).arg(Theme::AccentCyan));
     detectRow->addWidget(m_confidenceBar);
 
     bannerLayout->addLayout(detectRow);
@@ -89,8 +91,7 @@ void ProfilesPage::setupUi() {
 
     // 2. Selectable Profile Cards Grid
     auto* sectionLabel = new QLabel("Select System Workload Profile", this);
-    sectionLabel->setStyleSheet(QString("font-size: 15px; font-weight: 600; color: %1; margin-top: 6px;")
-        .arg(Theme::TextPrimary));
+    sectionLabel->setStyleSheet(Theme::sectionTitleStyleSheet());
     mainLayout->addWidget(sectionLabel);
 
     auto* profileGrid = new QGridLayout();
@@ -99,12 +100,12 @@ void ProfilesPage::setupUi() {
     m_profileBtnGroup = new QButtonGroup(this);
     m_profileBtnGroup->setExclusive(true);
 
-    const struct { WorkloadProfile profile; const char* title; const char* desc; } profiles[] = {
-        {WorkloadProfile::Coding, "Coding & Development", "Compiler bursts, low scheduling latency, balanced power."},
-        {WorkloadProfile::Gaming, "Gaming & High Performance", "Max core clock residency, reduced background preemption."},
-        {WorkloadProfile::Study, "Browsing & Studying", "Quiet acoustics, low fan speed, efficient power usage."},
-        {WorkloadProfile::Rendering, "Video Editing & Rendering", "Continuous all-core throughput, prevent sleep during jobs."},
-        {WorkloadProfile::BatterySaver, "Battery Saving", "Cap turbo states, prioritize deep sleep states, max efficiency."}
+    const struct { WorkloadProfile profile; const char* title; const char* desc; const char* accent; } profiles[] = {
+        {WorkloadProfile::Coding, "Coding & Development", "Compiler bursts, low scheduling latency, balanced power.", Theme::AccentCyan},
+        {WorkloadProfile::Gaming, "Gaming & High Performance", "Max core clock residency, reduced background preemption.", Theme::AccentAmber},
+        {WorkloadProfile::Study, "Browsing & Studying", "Quiet acoustics, low fan speed, efficient power usage.", Theme::AccentGreen},
+        {WorkloadProfile::Rendering, "Video Editing & Rendering", "Continuous all-core throughput, prevent sleep during jobs.", Theme::AccentPurple},
+        {WorkloadProfile::BatterySaver, "Battery Saving", "Cap turbo states, prioritize deep sleep states, max efficiency.", Theme::AccentGreen}
     };
 
     int col = 0;
@@ -113,13 +114,12 @@ void ProfilesPage::setupUi() {
         auto* btn = new QPushButton(this);
         btn->setCheckable(true);
         btn->setCursor(Qt::PointingHandCursor);
-        btn->setFixedHeight(80);
+        btn->setFixedHeight(86);
         btn->setStyleSheet(QString(
             "QPushButton {"
             "  background-color: %1;"
             "  border: 1px solid %2;"
             "  border-radius: 8px;"
-            "  padding: 10px 14px;"
             "  text-align: left;"
             "}"
             "QPushButton:hover {"
@@ -128,12 +128,12 @@ void ProfilesPage::setupUi() {
             "}"
             "QPushButton:checked {"
             "  background-color: %3;"
-            "  border: 2px solid %4;"
+            "  border: 2px solid %5;"
             "}"
-        ).arg(Theme::BgSurface).arg(Theme::BorderSubtle).arg(Theme::BgSurfaceAlt).arg(Theme::AccentBlue));
+        ).arg(Theme::BgSurface).arg(Theme::BorderSubtle).arg(Theme::BgSurfaceAlt).arg(Theme::BorderStrong).arg(item.accent));
 
         auto* btnLayout = new QVBoxLayout(btn);
-        btnLayout->setContentsMargins(0, 0, 0, 0);
+        btnLayout->setContentsMargins(14, 12, 14, 12);
         btnLayout->setSpacing(4);
 
         auto* titleLbl = new QLabel(item.title, btn);
@@ -142,7 +142,7 @@ void ProfilesPage::setupUi() {
         btnLayout->addWidget(titleLbl);
 
         auto* descLbl = new QLabel(item.desc, btn);
-        descLbl->setStyleSheet(QString("font-size: 11px; color: %1;").arg(Theme::TextSecondary));
+        descLbl->setStyleSheet(QString("font-size: 11px; color: %1; line-height: 1.3;").arg(Theme::TextSecondary));
         descLbl->setAttribute(Qt::WA_TransparentForMouseEvents, true);
         descLbl->setWordWrap(true);
         btnLayout->addWidget(descLbl);
@@ -166,30 +166,28 @@ void ProfilesPage::setupUi() {
 
     // 3. Profile Strategy Inspector Frame
     auto* inspectorFrame = new QFrame(this);
-    inspectorFrame->setStyleSheet(QString(
-        "QFrame { background-color: %1; border: 1px solid %2; border-radius: 8px; padding: 14px 18px; }"
-    ).arg(Theme::BgSurface).arg(Theme::BorderSubtle));
+    inspectorFrame->setStyleSheet(Theme::panelStyleSheet(8));
 
     auto* inspLayout = new QVBoxLayout(inspectorFrame);
-    inspLayout->setContentsMargins(0, 0, 0, 0);
+    inspLayout->setContentsMargins(18, 16, 18, 16);
     inspLayout->setSpacing(8);
 
     m_profileNameLabel = new QLabel(this);
-    m_profileNameLabel->setStyleSheet(QString("font-size: 15px; font-weight: 700; color: %1;").arg(Theme::AccentPurple));
+    m_profileNameLabel->setStyleSheet(QString("font-size: 14px; font-weight: 700; color: %1;").arg(Theme::AccentPurple));
     inspLayout->addWidget(m_profileNameLabel);
 
     m_profileDescLabel = new QLabel(this);
-    m_profileDescLabel->setStyleSheet(QString("color: %1;").arg(Theme::TextPrimary));
+    m_profileDescLabel->setStyleSheet(QString("color: %1; font-size: 12px;").arg(Theme::TextPrimary));
     m_profileDescLabel->setWordWrap(true);
     inspLayout->addWidget(m_profileDescLabel);
 
     m_profileRationaleLabel = new QLabel(this);
-    m_profileRationaleLabel->setStyleSheet(QString("font-size: 12px; color: %1;").arg(Theme::TextSecondary));
+    m_profileRationaleLabel->setStyleSheet(QString("font-size: 12px; color: %1; line-height: 1.4;").arg(Theme::TextSecondary));
     m_profileRationaleLabel->setWordWrap(true);
     inspLayout->addWidget(m_profileRationaleLabel);
 
     m_powerSchemeLabel = new QLabel(this);
-    m_powerSchemeLabel->setStyleSheet(QString("font-size: 12px; font-weight: 600; color: %1;").arg(Theme::AccentBlue));
+    m_powerSchemeLabel->setStyleSheet(QString("font-size: 12px; font-weight: 600; color: %1;").arg(Theme::AccentCyan));
     inspLayout->addWidget(m_powerSchemeLabel);
 
     mainLayout->addWidget(inspectorFrame, 1);

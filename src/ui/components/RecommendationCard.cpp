@@ -13,18 +13,49 @@ RecommendationCard::RecommendationCard(const Recommendation& rec, QWidget* paren
 }
 
 void RecommendationCard::setupUi() {
+    QString leftAccent;
+    QString badgeText, badgeBg, badgeFg;
+
+    switch (m_rec.level) {
+        case RecommendationLevel::Critical:
+            badgeText = "CRITICAL";
+            badgeBg = "#3b1219";
+            badgeFg = "#f43f5e";
+            leftAccent = Theme::AccentRose;
+            break;
+        case RecommendationLevel::Warning:
+            badgeText = "WARNING";
+            badgeBg = "#38240b";
+            badgeFg = "#f59e0b";
+            leftAccent = Theme::AccentAmber;
+            break;
+        case RecommendationLevel::Suggestion:
+            badgeText = "SUGGESTION";
+            badgeBg = "#102a45";
+            badgeFg = "#38bdf8";
+            leftAccent = Theme::AccentCyan;
+            break;
+        case RecommendationLevel::Info:
+        default:
+            badgeText = "INFO";
+            badgeBg = "#1f2638";
+            badgeFg = "#94a3b8";
+            leftAccent = Theme::BorderSubtle;
+            break;
+    }
+
     setObjectName("recCard");
     setStyleSheet(QString(
         "#recCard {"
         "  background-color: %1;"
         "  border: 1px solid %2;"
+        "  border-left: 3px solid %3;"
         "  border-radius: 8px;"
-        "  padding: 14px 16px;"
         "}"
-    ).arg(Theme::BgSurface).arg(Theme::BorderSubtle));
+    ).arg(Theme::BgSurface).arg(Theme::BorderSubtle).arg(leftAccent));
 
     auto* layout = new QVBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setContentsMargins(16, 14, 16, 14);
     layout->setSpacing(10);
 
     // Header layout: Level Badge + Title + Action Button
@@ -33,34 +64,6 @@ void RecommendationCard::setupUi() {
 
     // Level Badge
     auto* badge = new QLabel(this);
-    QString badgeText;
-    QString badgeBg;
-    QString badgeFg;
-
-    switch (m_rec.level) {
-        case RecommendationLevel::Critical:
-            badgeText = "CRITICAL";
-            badgeBg = "#7f1d1d";
-            badgeFg = "#fca5a5";
-            break;
-        case RecommendationLevel::Warning:
-            badgeText = "WARNING";
-            badgeBg = "#78350f";
-            badgeFg = "#fde68a";
-            break;
-        case RecommendationLevel::Suggestion:
-            badgeText = "SUGGESTION";
-            badgeBg = "#1e3a5f";
-            badgeFg = "#bae6fd";
-            break;
-        case RecommendationLevel::Info:
-        default:
-            badgeText = "INFO";
-            badgeBg = "#1f2937";
-            badgeFg = "#9ca3af";
-            break;
-    }
-
     badge->setText(badgeText);
     badge->setStyleSheet(QString(
         "background-color: %1; color: %2; font-size: 10px; font-weight: 700; "
@@ -86,45 +89,43 @@ void RecommendationCard::setupUi() {
 
     layout->addLayout(headerLayout);
 
-    // Section 1: Objective Observation vs Diagnosis Box
-    auto* obsFrame = new QFrame(this);
-    obsFrame->setStyleSheet(QString(
-        "QFrame { background-color: %1; border-radius: 6px; padding: 10px; }"
-    ).arg(Theme::BgSurfaceAlt));
-
-    auto* obsLayout = new QVBoxLayout(obsFrame);
-    obsLayout->setContentsMargins(0, 0, 0, 0);
-    obsLayout->setSpacing(6);
+    // Section 1: Objective Observation & Technical Diagnosis
+    auto* telemetryLayout = new QVBoxLayout();
+    telemetryLayout->setSpacing(4);
 
     auto* obsLabel = new QLabel(
-        QString("<span style='color:%1; font-weight:600;'>Observation:</span> %2")
-            .arg(Theme::AccentBlue)
-            .arg(QString::fromStdString(m_rec.observation)), obsFrame);
+        QString("<span style='color:%1; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.5px;'>Observation:</span> "
+                "<span style='color:%2; font-size:12px;'>%3</span>")
+            .arg(Theme::AccentCyan)
+            .arg(Theme::TextPrimary)
+            .arg(QString::fromStdString(m_rec.observation)), this);
     obsLabel->setWordWrap(true);
-    obsLayout->addWidget(obsLabel);
+    telemetryLayout->addWidget(obsLabel);
 
     auto* diagLabel = new QLabel(
-        QString("<span style='color:%1; font-weight:600;'>Diagnosis:</span> %2")
+        QString("<span style='color:%1; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.5px;'>Diagnosis:</span> "
+                "<span style='color:%2; font-size:12px;'>%3</span>")
             .arg(Theme::AccentAmber)
-            .arg(QString::fromStdString(m_rec.diagnosis)), obsFrame);
+            .arg(Theme::TextSecondary)
+            .arg(QString::fromStdString(m_rec.diagnosis)), this);
     diagLabel->setWordWrap(true);
-    obsLayout->addWidget(diagLabel);
+    telemetryLayout->addWidget(diagLabel);
 
-    layout->addWidget(obsFrame);
+    layout->addLayout(telemetryLayout);
 
     // Section 2: Recommended Action & Explanation
     auto* actionLabel = new QLabel(
-        QString("<span style='font-weight:600; color:%1;'>Recommended Action:</span> %2")
+        QString("<span style='color:%1; font-weight:600; font-size:11px; text-transform:uppercase; letter-spacing:0.5px;'>Action:</span> "
+                "<span style='color:%2; font-size:13px; font-weight:600;'>%3</span>")
+            .arg(Theme::TextSecondary)
             .arg(Theme::TextPrimary)
             .arg(QString::fromStdString(m_rec.recommendedAction)), this);
     actionLabel->setWordWrap(true);
     layout->addWidget(actionLabel);
 
     if (!m_rec.explanation.empty()) {
-        auto* explLabel = new QLabel(
-            QString("<span style='font-size:11px; color:%1;'>%2</span>")
-                .arg(Theme::TextMuted)
-                .arg(QString::fromStdString(m_rec.explanation)), this);
+        auto* explLabel = new QLabel(QString::fromStdString(m_rec.explanation), this);
+        explLabel->setStyleSheet(QString("font-size: 12px; color: %1; line-height: 1.4;").arg(Theme::TextSecondary));
         explLabel->setWordWrap(true);
         layout->addWidget(explLabel);
     }
@@ -135,20 +136,20 @@ void RecommendationCard::setupUi() {
 
     if (!m_rec.benefits.empty()) {
         auto* benLabel = new QLabel(
-            QString("<span style='color:%1; font-weight:600;'>Benefits:</span> %2")
+            QString("<span style='color:%1; font-weight:600;'>✓ Benefit:</span> %2")
                 .arg(Theme::AccentGreen)
                 .arg(QString::fromStdString(m_rec.benefits)), this);
-        benLabel->setStyleSheet("font-size: 11px;");
+        benLabel->setStyleSheet(QString("font-size: 11px; color: %1;").arg(Theme::TextSecondary));
         benLabel->setWordWrap(true);
         tradeOffs->addWidget(benLabel, 1);
     }
 
     if (!m_rec.risksAndLimitations.empty()) {
         auto* riskLabel = new QLabel(
-            QString("<span style='color:%1; font-weight:600;'>Risks/Limitations:</span> %2")
+            QString("<span style='color:%1; font-weight:600;'>⚠ Trade-off:</span> %2")
                 .arg(Theme::AccentAmber)
                 .arg(QString::fromStdString(m_rec.risksAndLimitations)), this);
-        riskLabel->setStyleSheet("font-size: 11px;");
+        riskLabel->setStyleSheet(QString("font-size: 11px; color: %1;").arg(Theme::TextSecondary));
         riskLabel->setWordWrap(true);
         tradeOffs->addWidget(riskLabel, 1);
     }
