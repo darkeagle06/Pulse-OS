@@ -81,6 +81,29 @@ int main(int argc, char* argv[]) {
         assert(switchMs < 200 && "Profile switching must not freeze the GUI!");
     }
 
+    // Check AnalysisPage layout sizes at smaller and default sizes
+    pulse::logDiagnostic("[TEST] Checking AnalysisPage layout responsiveness...");
+    window.resize(950, 620);
+    QMetaObject::invokeMethod(&window, "onSidebarButtonClicked", Q_ARG(int, 4));
+    app.processEvents();
+
+    auto* stacked = window.findChild<QStackedWidget*>();
+    auto* analysisPage = stacked ? stacked->widget(4) : nullptr;
+    if (stacked && analysisPage) {
+        std::cout << "[DIAG] Small Window (950x620): Window width: " << window.width() << ", Stacked width: " << stacked->width() 
+                  << ", AnalysisPage width: " << analysisPage->width() 
+                  << ", AnalysisPage minHint: " << analysisPage->minimumSizeHint().width() << "x" << analysisPage->minimumSizeHint().height() << std::endl;
+        assert(analysisPage->width() <= stacked->width() && "AnalysisPage must not overflow stacked widget!");
+    }
+
+    window.resize(1280, 840);
+    app.processEvents();
+    if (stacked && analysisPage) {
+        std::cout << "[DIAG] Large Window (1280x840): Window width: " << window.width() << ", Stacked width: " << stacked->width() 
+                  << ", AnalysisPage width: " << analysisPage->width() << std::endl;
+        assert(analysisPage->width() <= stacked->width() && "AnalysisPage must not overflow stacked widget!");
+    }
+
     // Stress navigation across all pages (Dashboard, Explorer, Profiles, Recommendations, Analysis, Settings)
     pulse::logDiagnostic("[TEST] Performing 3 rapid navigation cycles across all 6 pages...");
     for (int cycle = 0; cycle < 3; ++cycle) {
