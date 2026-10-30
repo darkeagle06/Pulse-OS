@@ -24,6 +24,8 @@ set(PULSEOS_CORE_SOURCES
     src/core/PerformanceAnalyzer.cpp
     src/core/ReportExporter.cpp
     src/core/MonitoringWorker.cpp
+    src/core/InstalledAppManager.cpp
+    src/core/SmartAlertEngine.cpp
     src/core/strategies/CodingStrategy.cpp
     src/core/strategies/GamingStrategy.cpp
     src/core/strategies/StudyStrategy.cpp
@@ -43,6 +45,8 @@ set(PULSEOS_CORE_HEADERS
     src/core/PerformanceAnalyzer.h
     src/core/ReportExporter.h
     src/core/MonitoringWorker.h
+    src/core/InstalledAppManager.h
+    src/core/SmartAlertEngine.h
     src/core/DiagnosticLog.h
     src/core/strategies/OptimizationStrategy.h
     src/core/strategies/CodingStrategy.h
@@ -62,8 +66,10 @@ set(PULSEOS_UI_SOURCES
     src/ui/components/ProcessTableView.cpp
     src/ui/components/RecommendationCard.cpp
     src/ui/components/ActionConfirmDialog.cpp
+    src/ui/components/UninstallConfirmDialog.cpp
     src/ui/pages/DashboardPage.cpp
     src/ui/pages/ProcessesPage.cpp
+    src/ui/pages/ApplicationsPage.cpp
     src/ui/pages/ProfilesPage.cpp
     src/ui/pages/RecommendationsPage.cpp
     src/ui/pages/AnalysisPage.cpp
@@ -78,8 +84,10 @@ set(PULSEOS_UI_HEADERS
     src/ui/components/ProcessTableView.h
     src/ui/components/RecommendationCard.h
     src/ui/components/ActionConfirmDialog.h
+    src/ui/components/UninstallConfirmDialog.h
     src/ui/pages/DashboardPage.h
     src/ui/pages/ProcessesPage.h
+    src/ui/pages/ApplicationsPage.h
     src/ui/pages/ProfilesPage.h
     src/ui/pages/RecommendationsPage.h
     src/ui/pages/AnalysisPage.h
@@ -111,6 +119,8 @@ target_link_libraries(PulseOS PRIVATE
     powrprof
     version
     wtsapi32
+    advapi32
+    shell32
 )
 
 # Enable Testing

@@ -145,6 +145,132 @@ struct ComparisonResult {
     std::string summaryMessage;
 };
 
+// --- MODULE 1: Installed Application Manager Types ---
+
+enum class AppCategory {
+    All,
+    PotentiallyUnused,
+    Large,
+    RecentlyInstalled,
+    UnknownPublisher
+};
+
+inline std::string appCategoryToString(AppCategory category) {
+    switch (category) {
+        case AppCategory::All: return "All Applications";
+        case AppCategory::PotentiallyUnused: return "Potentially Unused";
+        case AppCategory::Large: return "Large Applications";
+        case AppCategory::RecentlyInstalled: return "Recently Installed";
+        case AppCategory::UnknownPublisher: return "Unknown / Unverified";
+        default: return "Unknown";
+    }
+}
+
+struct InstalledAppInfo {
+    std::string id;                    // Registry subkey name
+    std::string displayName;           // DisplayName
+    std::string name;                  // Name (alias for displayName)
+    std::string publisher;             // Publisher
+    std::string displayVersion;        // DisplayVersion
+    std::string version;               // Version (alias for displayVersion)
+    std::string installDate;           // Formatted date (e.g. "2026-05-18")
+    std::string installDateRaw;        // Raw registry string (e.g. "20260518")
+    uint64_t estimatedSize{0};         // Bytes (derived from EstimatedSize in KB)
+    uint64_t estimatedSizeBytes{0};    // Bytes (alias for estimatedSize)
+    std::string installLocation;       // InstallLocation
+    std::string uninstallString;       // UninstallString
+    std::string quietUninstallString;  // QuietUninstallString
+    std::string registryRoot;          // "HKLM", "HKLM_32", or "HKCU"
+    bool isSystemComponent{false};     // SystemComponent == 1
+    bool isWindowsUpdate{false};       // ParentKeyName present or KB-prefix
+    bool canUninstall{false};          // Valid uninstall string & not protected
+    AppCategory category{AppCategory::All};
+    std::string usageEvidence;         // Measured factual evidence (e.g., "Last modified 120 days ago; zero running processes")
+    std::chrono::system_clock::time_point lastWriteTime;
+    bool isCurrentlyRunning{false};    // Has an active process in the current process snapshot
+
+    std::string formattedSize() const {
+        uint64_t sz = estimatedSize ? estimatedSize : estimatedSizeBytes;
+        if (sz == 0) return "--";
+        double mb = static_cast<double>(sz) / (1024.0 * 1024.0);
+        if (mb >= 1024.0) {
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%.2f GB", mb / 1024.0);
+            return std::string(buf);
+        }
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%.1f MB", mb);
+        return std::string(buf);
+    }
+};
+
+struct UninstallResult {
+    bool success{false};
+    uint32_t exitCode{0};
+    std::string message;
+};
+
+// --- MODULE 2: Smart Resource Alerts & Notifications Types ---
+
+enum class AlertType {
+    HighMemoryUsage,
+    HighCpuProcess,
+    HeavyBackground,
+    IdleBackground,
+    MemoryPressure
+};
+
+inline std::string alertTypeToString(AlertType type) {
+    switch (type) {
+        case AlertType::HighMemoryUsage: return "High Memory Usage";
+        case AlertType::HighCpuProcess: return "High CPU Consumption";
+        case AlertType::HeavyBackground: return "Resource-Heavy Background App";
+        case AlertType::IdleBackground: return "Potentially Idle Background App";
+        case AlertType::MemoryPressure: return "Critical System Memory Pressure";
+        default: return "System Alert";
+    }
+}
+
+enum class AlertSeverity {
+    Info,
+    Warning,
+    Critical
+};
+
+struct ResourceAlert {
+    std::string id;
+    AlertType type{AlertType::HighCpuProcess};
+    AlertSeverity severity{AlertSeverity::Warning};
+    std::string title;
+    std::string observation;           // Objective measured fact
+    std::string diagnosis;             // Technical diagnosis
+    std::string suggestedAction;       // Recommended user action
+    std::string targetProcessName;     // Executable name (if process-specific)
+    uint32_t targetPid{0};
+    double triggerValue{0.0};          // Triggering metric value (CPU% or RAM%)
+    std::chrono::system_clock::time_point timestamp;
+    uint32_t sustainedSeconds{0};      // How long the condition has persisted
+    bool isSnoozed{false};
+    bool isDismissed{false};
+};
+
+struct AlertSettings {
+    bool enableHighMemory{true};
+    bool enableHighCpuProcess{true};
+    bool enableHeavyBackground{true};
+    bool enableIdleBackground{true};
+    bool enableMemoryPressure{true};
+
+    double systemRamThresholdPercent{85.0};
+    double processCpuThresholdPercent{30.0};
+    double heavyBackgroundCpuPercent{15.0};
+    uint64_t heavyBackgroundRamBytes{1024ULL * 1024 * 1024}; // 1 GB
+    uint32_t sustainedDurationSeconds{15};                   // 15 seconds sustained
+    uint32_t cooldownDurationSeconds{300};                   // 5 minutes cooldown between repeat alerts
+
+    std::vector<std::string> ignoreList;                    // Process names never to alert on
+};
+
 } // namespace pulse
 
 #ifdef QT_CORE_LIB
@@ -156,6 +282,8 @@ Q_DECLARE_METATYPE(std::vector<pulse::ProcessInfo>)
 Q_DECLARE_METATYPE(pulse::TaskDetectionResult)
 Q_DECLARE_METATYPE(pulse::Recommendation)
 Q_DECLARE_METATYPE(std::vector<pulse::Recommendation>)
+Q_DECLARE_METATYPE(pulse::InstalledAppInfo)
+Q_DECLARE_METATYPE(std::vector<pulse::InstalledAppInfo>)
+Q_DECLARE_METATYPE(pulse::ResourceAlert)
+Q_DECLARE_METATYPE(std::vector<pulse::ResourceAlert>)
 #endif
-
-

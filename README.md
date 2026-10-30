@@ -80,7 +80,9 @@ PulseOS follows strict object-oriented principles, RAII, smart pointers, const-c
 | `SystemOptimizer` | Safe Action Center engine executing verified Win32 power scheme switching, working set trimming, process priority adjustments, and sleep assertion with rollback tracking. |
 | `PerformanceAnalyzer` | Captures baseline and post-optimization snapshots, validates workload comparability, and calculates verified deltas. |
 | `ReportExporter` | Exports structured CSV metrics audits and formatted Markdown system reports. |
-| `SettingsManager` | Manages persistent user preferences (sampling rates, auto-detection, privacy, startup configuration). |
+| `InstalledAppManager` | Scans registered Windows applications across 64-bit, 32-bit (Wow6432Node), and HKCU hives, evaluates verifiable usage evidence, and manages safe vendor uninstaller invocation with UAC elevation. |
+| `SmartAlertEngine` | Evaluates sustained multi-second resource conditions (High Memory, High CPU processes, Heavy background apps, Idle background apps, Memory pressure) with repeat cooldowns, dismiss/snooze controls, and ignore-list filtering. |
+| `SettingsManager` | Manages persistent user preferences (sampling rates, auto-detection, privacy, startup configuration, and alert thresholds). |
 
 ---
 
@@ -143,14 +145,16 @@ ctest --test-dir build --output-on-failure
 
 ## Automated Test Suite
 
-PulseOS includes 6 automated unit and integration test targets:
+PulseOS includes 8 automated unit and integration test targets:
 
 1. `SanityTest`: Validates type conversions, defaults, and configuration persistence.
 2. `MonitorsIntegrationTest`: Queries live Windows APIs on the host machine to verify CPU delta math, memory status, and process snapshotting.
 3. `StrategiesTest`: Verifies strategy polymorphism, rationale strings, and recommendation evaluation on simulated loads.
 4. `RecommendationsTest`: Verifies rule-based engines (memory pressure, runaway process, and startup registry queries).
 5. `PerformanceAnalyzerTest`: Verifies before-and-after comparison math, delta calculations, and workload divergence detection.
-6. `ProfilesNavigationTest`: Stress tests page navigation, multi-threaded worker sampling, rapid profile switches, and validates zero UI stalls.
+6. `ProfilesNavigationTest`: Stress tests 7-page navigation, multi-threaded worker sampling, rapid profile switches, and validates zero UI stalls.
+7. `InstalledAppsTest`: Validates registry discovery, metadata parsing, size formatting, category filtering, sorting, and safety invariants.
+8. `SmartAlertsTest`: Validates sustained resource alerts, cooldown timers, ignore-list filtering, dismiss/snooze controls, and history tracking.
 
 Run all tests:
 ```powershell
@@ -175,10 +179,12 @@ ctest --test-dir build --output-on-failure
 - [x] Safe Action Center with preview modal, explicit consent, and rollback stack
 - [x] Documented Windows power plan switching, working set trimming, process deprioritization, and sleep assertion
 - [x] Before-and-after empirical performance snapshot analyzer with comparability validation
+- [x] **Installed Application Manager**: Complete Windows registry scanner (64-bit, 32-bit, user keys), factual usage evidence tracking, categories (Recently Installed, Potentially Unused, Large Apps), and safe uninstaller invocation with UAC elevation
+- [x] **Smart Resource Alerts & System Notifications**: Sustained high RAM, memory pressure, sustained high CPU per process, heavy and idle background app detection, customizable thresholds, repeat cooldowns, ignore-list management, and native Windows tray notifications
 - [x] Structured CSV and Markdown audit report exporter
 - [x] Persistent preferences management via `QSettings`
 - [x] Polished dark desktop theme with responsive layouts
-- [x] Automated unit and integration test suite (5 passing test suites)
+- [x] Automated unit and integration test suite (8 passing test suites, 100% pass rate)
 - [x] Standalone distribution bundle deployed via `windeployqt`
 
 ### 📋 Planned Enhancements

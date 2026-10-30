@@ -7,6 +7,7 @@
 #include <QButtonGroup>
 #include <QTimer>
 #include <QThread>
+#include <QSystemTrayIcon>
 #include <memory>
 #include <map>
 
@@ -18,9 +19,12 @@
 #include "../core/SystemOptimizer.h"
 #include "../core/PerformanceAnalyzer.h"
 #include "../core/MonitoringWorker.h"
+#include "../core/InstalledAppManager.h"
+#include "../core/SmartAlertEngine.h"
 #include "../core/strategies/OptimizationStrategy.h"
 #include "pages/DashboardPage.h"
 #include "pages/ProcessesPage.h"
+#include "pages/ApplicationsPage.h"
 #include "pages/ProfilesPage.h"
 #include "pages/RecommendationsPage.h"
 #include "pages/AnalysisPage.h"
@@ -43,11 +47,16 @@ private slots:
         const std::vector<pulse::ProcessInfo>& processes,
         const pulse::TaskDetectionResult& detection,
         const std::vector<pulse::Recommendation>& recommendations);
+    void onAlertsEvaluated(
+        const std::vector<pulse::ResourceAlert>& activeAlerts,
+        const std::vector<pulse::ResourceAlert>& newAlerts);
     void onProfileChanged(WorkloadProfile profile);
     void onActionTriggered(const Recommendation& rec);
     void onMonitoringIntervalChanged(uint32_t intervalMs);
     void onMonitoringToggled(bool enabled);
     void onRollbackRequested();
+    void onTrayMessageClicked();
+    void onAppScanCompleted(size_t totalApps, size_t unusedApps);
 
 private:
     void setupUi();
@@ -55,6 +64,7 @@ private:
     QWidget* createTopBar();
     void updateHeaderPills(const SystemMetrics& metrics);
     void initStrategies();
+    void setupTrayIcon();
 
     std::shared_ptr<SettingsManager> m_settings;
     std::shared_ptr<SystemMonitor> m_systemMonitor;
@@ -63,6 +73,8 @@ private:
     std::shared_ptr<PerformanceAnalyzer> m_analyzer;
     std::shared_ptr<TaskDetector> m_taskDetector;
     std::shared_ptr<RecommendationEngine> m_recEngine;
+    std::shared_ptr<InstalledAppManager> m_appManager;
+    std::shared_ptr<SmartAlertEngine> m_alertEngine;
 
     // Strategies
     std::map<WorkloadProfile, std::shared_ptr<OptimizationStrategy>> m_strategies;
@@ -76,14 +88,17 @@ private:
     QButtonGroup* m_sidebarGroup{nullptr};
 
     QLabel* m_statusPill{nullptr};
+    QLabel* m_alertPill{nullptr};
     QLabel* m_cpuQuickPill{nullptr};
     QLabel* m_ramQuickPill{nullptr};
     QLabel* m_activeProfilePill{nullptr};
     QPushButton* m_rollbackTopBtn{nullptr};
+    QSystemTrayIcon* m_trayIcon{nullptr};
 
     // Pages
     DashboardPage* m_dashboardPage{nullptr};
     ProcessesPage* m_processesPage{nullptr};
+    ApplicationsPage* m_applicationsPage{nullptr};
     ProfilesPage* m_profilesPage{nullptr};
     RecommendationsPage* m_recommendationsPage{nullptr};
     AnalysisPage* m_analysisPage{nullptr};

@@ -47,6 +47,10 @@ public:
     [[nodiscard]] std::string getExportDirectory() const { return m_exportDirectory; }
     void setExportDirectory(const std::string& path);
 
+    // Smart Resource Alerts Configuration
+    [[nodiscard]] AlertSettings getAlertSettings() const { return m_alertSettings; }
+    void setAlertSettings(const AlertSettings& settings);
+
 private:
     uint32_t m_samplingIntervalMs{1000};
     bool m_monitoringEnabled{true};
@@ -56,7 +60,7 @@ private:
     bool m_launchOnStartup{false};
     size_t m_historyBufferSize{60}; // 60 samples = 60s at 1s interval
     std::string m_exportDirectory;
+    AlertSettings m_alertSettings;
 };
 
 } // namespace pulse
-

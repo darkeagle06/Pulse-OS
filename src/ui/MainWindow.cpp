@@ -15,6 +15,7 @@
 #include <QPushButton>
 #include <QFrame>
 #include <QMessageBox>
+#include <QPainter>
 
 namespace pulse::ui {
 
@@ -24,20 +25,23 @@ MainWindow::MainWindow(std::shared_ptr<SettingsManager> settings, QWidget *paren
       m_systemMonitor(std::make_shared<SystemMonitor>(60)),
       m_processMonitor(std::make_shared<ProcessMonitor>()),
       m_optimizer(std::make_shared<SystemOptimizer>()),
-      m_analyzer(std::make_shared<PerformanceAnalyzer>()) {
+      m_analyzer(std::make_shared<PerformanceAnalyzer>()),
+      m_appManager(std::make_shared<InstalledAppManager>()) {
 
     logDiagnostic("[MainWindow] Starting MainWindow construction...");
 
     m_taskDetector = std::make_shared<TaskDetector>(m_processMonitor, m_systemMonitor);
     m_recEngine = std::make_shared<RecommendationEngine>();
+    m_alertEngine = std::make_shared<SmartAlertEngine>(m_settings ? m_settings->getAlertSettings() : AlertSettings{});
 
     initStrategies();
     setupUi();
+    setupTrayIcon();
 
     // Start background monitoring worker thread
     m_workerThread = new QThread(this);
     m_worker = new MonitoringWorker(
-        m_systemMonitor, m_processMonitor, m_taskDetector, m_recEngine, m_activeStrategy);
+        m_systemMonitor, m_processMonitor, m_taskDetector, m_recEngine, m_activeStrategy, m_alertEngine);
     m_worker->moveToThread(m_workerThread);
 
     connect(m_workerThread, &QThread::started, this, [this]() {
@@ -47,6 +51,8 @@ MainWindow::MainWindow(std::shared_ptr<SettingsManager> settings, QWidget *paren
     connect(m_workerThread, &QThread::finished, m_worker, &QObject::deleteLater);
     connect(m_worker, &MonitoringWorker::dataSampled, this,
             &MainWindow::onMonitoringDataReady, Qt::QueuedConnection);
+    connect(m_worker, &MonitoringWorker::alertsEvaluated, this,
+            &MainWindow::onAlertsEvaluated, Qt::QueuedConnection);
 
     m_workerThread->start();
     logDiagnostic("[MainWindow] MainWindow initialized and worker thread started.");
@@ -102,23 +108,26 @@ void MainWindow::setupUi() {
     // Header bar
     rightLayout->addWidget(createTopBar());
 
-    // Stacked widget for all 6 pages
+    // Stacked widget for all 7 pages
     m_stackedWidget = new QStackedWidget(this);
 
     m_dashboardPage = new DashboardPage(this);
     m_processesPage = new ProcessesPage(this);
+    m_applicationsPage = new ApplicationsPage(m_appManager, this);
     m_profilesPage = new ProfilesPage(m_settings, this);
     m_recommendationsPage = new RecommendationsPage(this);
     m_analysisPage = new AnalysisPage(m_analyzer, this);
-    m_settingsPage = new SettingsPage(m_settings, m_systemMonitor, m_processMonitor, m_optimizer, this);
+    m_settingsPage = new SettingsPage(m_settings, m_systemMonitor, m_processMonitor, m_optimizer, m_alertEngine, this);
 
     connect(m_profilesPage, &ProfilesPage::profileChanged, this, &MainWindow::onProfileChanged);
     connect(m_recommendationsPage, &RecommendationsPage::actionTriggered, this, &MainWindow::onActionTriggered);
     connect(m_settingsPage, &SettingsPage::monitoringIntervalChanged, this, &MainWindow::onMonitoringIntervalChanged);
     connect(m_settingsPage, &SettingsPage::monitoringToggled, this, &MainWindow::onMonitoringToggled);
+    connect(m_applicationsPage, &ApplicationsPage::scanCompleted, this, &MainWindow::onAppScanCompleted);
 
     m_stackedWidget->addWidget(m_dashboardPage);
     m_stackedWidget->addWidget(m_processesPage);
+    m_stackedWidget->addWidget(m_applicationsPage);
     m_stackedWidget->addWidget(m_profilesPage);
     m_stackedWidget->addWidget(m_recommendationsPage);
     m_stackedWidget->addWidget(m_analysisPage);
@@ -155,10 +164,11 @@ QWidget* MainWindow::createSidebar() {
     const struct { int id; const char* label; } navItems[] = {
         {0, "  ▣   Dashboard"},
         {1, "  ☲   Process Explorer"},
-        {2, "  ◈   Workload Profiles"},
-        {3, "  ◇   Recommendations"},
-        {4, "  ▲   Performance Analysis"},
-        {5, "  ⚙   Settings & Privacy"}
+        {2, "  ⊞   Installed Apps"},
+        {3, "  ◈   Workload Profiles"},
+        {4, "  ◇   Recommendations"},
+        {5, "  ▲   Performance Analysis"},
+        {6, "  ⚙   Settings & Privacy"}
     };
 
     for (const auto& item : navItems) {
@@ -201,6 +211,11 @@ QWidget* MainWindow::createTopBar() {
     m_activeProfilePill = new QLabel("Profile: " + QString::fromStdString(profName), topBar);
     m_activeProfilePill->setStyleSheet(Theme::pillStyleSheet(Theme::BgSurfaceAlt, Theme::AccentPurple));
     layout->addWidget(m_activeProfilePill);
+
+    // Smart Alert Status Pill
+    m_alertPill = new QLabel("● System Stable", topBar);
+    m_alertPill->setStyleSheet(Theme::pillStyleSheet(Theme::BgSurfaceAlt, Theme::AccentGreen));
+    layout->addWidget(m_alertPill);
 
     layout->addStretch();
 
@@ -384,10 +399,108 @@ void MainWindow::onMonitoringDataReady(
         m_analysisPage->updateLiveMetrics(sysMetrics, processes, prof);
     }
 
+    // 7. Update Applications page process context
+    if (m_applicationsPage) {
+        m_applicationsPage->updateProcessContext(processes);
+    }
+
     auto tEnd = std::chrono::steady_clock::now();
     auto durMs = std::chrono::duration_cast<std::chrono::milliseconds>(tEnd - tStart).count();
     if (durMs > 25) {
         logDiagnostic("[MainWindow] UI update on GUI thread took " + std::to_string(durMs) + " ms");
+    }
+}
+
+void MainWindow::setupTrayIcon() {
+    m_trayIcon = new QSystemTrayIcon(this);
+
+    // Create an elegant cyan square icon with pulse marker
+    QPixmap pixmap(32, 32);
+    pixmap.fill(Qt::transparent);
+    QPainter painter(&pixmap);
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.setBrush(QColor(Theme::AccentCyan));
+    painter.setPen(Qt::NoPen);
+    painter.drawRoundedRect(2, 2, 28, 28, 6, 6);
+    painter.setPen(QPen(QColor(Theme::BgWindow), 2.5));
+    // Small ECG heartbeat glyph
+    QPolygonF pulseGlyph;
+    pulseGlyph << QPointF(5, 16) << QPointF(11, 16) << QPointF(14, 8)
+               << QPointF(18, 24) << QPointF(21, 16) << QPointF(27, 16);
+    painter.drawPolyline(pulseGlyph);
+    painter.end();
+
+    QIcon trayIcon(pixmap);
+    setWindowIcon(trayIcon);
+    m_trayIcon->setIcon(trayIcon);
+    m_trayIcon->setToolTip("PulseOS — Adaptive CPU & Resource Assistant");
+
+    connect(m_trayIcon, &QSystemTrayIcon::messageClicked, this, &MainWindow::onTrayMessageClicked);
+    connect(m_trayIcon, &QSystemTrayIcon::activated, this, [this](QSystemTrayIcon::ActivationReason reason) {
+        if (reason == QSystemTrayIcon::Trigger || reason == QSystemTrayIcon::DoubleClick) {
+            onTrayMessageClicked();
+        }
+    });
+
+    m_trayIcon->show();
+}
+
+void MainWindow::onAlertsEvaluated(
+    const std::vector<pulse::ResourceAlert>& activeAlerts,
+    const std::vector<pulse::ResourceAlert>& newAlerts) {
+
+    // 1. Update Header Pill
+    if (m_alertPill) {
+        if (activeAlerts.empty()) {
+            m_alertPill->setText("● System Stable");
+            m_alertPill->setStyleSheet(Theme::pillStyleSheet(Theme::BgSurfaceAlt, Theme::AccentGreen));
+        } else {
+            bool hasCritical = false;
+            for (const auto& a : activeAlerts) {
+                if (a.severity == AlertSeverity::Critical) {
+                    hasCritical = true;
+                    break;
+                }
+            }
+            QString col = hasCritical ? Theme::AccentRose : Theme::AccentAmber;
+            m_alertPill->setText(QString("⚠ %1 Active Alert%2")
+                .arg(activeAlerts.size())
+                .arg(activeAlerts.size() > 1 ? "s" : ""));
+            m_alertPill->setStyleSheet(Theme::pillStyleSheet(Theme::BgSurfaceAlt, col));
+        }
+    }
+
+    // 2. Update Dashboard banner
+    if (m_dashboardPage) {
+        m_dashboardPage->updateAlertStatus(activeAlerts);
+    }
+
+    // 3. Dispatch native Windows toast notifications for new alerts
+    if (m_trayIcon && !newAlerts.empty()) {
+        const auto& alert = newAlerts.front();
+        QSystemTrayIcon::MessageIcon icon = (alert.severity == AlertSeverity::Critical)
+            ? QSystemTrayIcon::Critical
+            : (alert.severity == AlertSeverity::Warning ? QSystemTrayIcon::Warning : QSystemTrayIcon::Information);
+
+        QString msg = QString::fromStdString(alert.observation + "\n" + alert.suggestedAction);
+        m_trayIcon->showMessage(
+            QString::fromStdString("PulseOS: " + alert.title),
+            msg,
+            icon,
+            6000
+        );
+    }
+}
+
+void MainWindow::onTrayMessageClicked() {
+    showNormal();
+    raise();
+    activateWindow();
+}
+
+void MainWindow::onAppScanCompleted(size_t totalApps, size_t unusedApps) {
+    if (m_dashboardPage) {
+        m_dashboardPage->updateInstalledAppsCount(totalApps, unusedApps);
     }
 }
 

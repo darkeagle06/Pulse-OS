@@ -24,10 +24,21 @@ public:
                        const std::vector<double>& cpuHistory,
                        const std::vector<double>& ramHistory,
                        const std::vector<ProcessInfo>& topProcesses);
+    void updateAlertStatus(const std::vector<ResourceAlert>& activeAlerts);
+    void updateInstalledAppsCount(size_t totalApps, size_t unusedApps);
+
+signals:
+    void navigateToAlertsRequested();
+    void navigateToAppsRequested();
 
 private:
     void setupUi();
     static QString formatUptime(uint64_t seconds);
+
+    // Alert Banner Strip
+    QFrame* m_alertBannerFrame{nullptr};
+    QLabel* m_alertBannerText{nullptr};
+    QLabel* m_alertCountBadge{nullptr};
 
     // Cards
     MetricCard* m_cpuCard{nullptr};
@@ -39,6 +50,7 @@ private:
     QLabel* m_cpuModelLabel{nullptr};
     QLabel* m_coresLabel{nullptr};
     QLabel* m_totalRamLabel{nullptr};
+    QLabel* m_installedAppsLabel{nullptr};
 
     // Charts
     PerformanceChart* m_cpuChart{nullptr};

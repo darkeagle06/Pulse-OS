@@ -36,8 +36,29 @@ void DashboardPage::setupUi() {
     m_totalRamLabel->setStyleSheet(QString("font-size: 12px; color: %1;").arg(Theme::TextSecondary));
     hwLayout->addWidget(m_totalRamLabel);
 
+    m_installedAppsLabel = new QLabel("Installed Apps: --", hwFrame);
+    m_installedAppsLabel->setStyleSheet(QString("font-size: 12px; color: %1;").arg(Theme::TextSecondary));
+    hwLayout->addWidget(m_installedAppsLabel);
+
     hwLayout->addStretch();
     mainLayout->addWidget(hwFrame);
+
+    // Alert Banner Frame
+    m_alertBannerFrame = new QFrame(this);
+    m_alertBannerFrame->setStyleSheet(Theme::bannerStyleSheet(Theme::AccentGreen));
+    auto* bannerLayout = new QHBoxLayout(m_alertBannerFrame);
+    bannerLayout->setContentsMargins(14, 8, 14, 8);
+    bannerLayout->setSpacing(12);
+
+    m_alertCountBadge = new QLabel("● SYSTEM NOMINAL", m_alertBannerFrame);
+    m_alertCountBadge->setStyleSheet(Theme::pillStyleSheet(Theme::BgSurfaceAlt, Theme::AccentGreen));
+    bannerLayout->addWidget(m_alertCountBadge);
+
+    m_alertBannerText = new QLabel("Smart Resource Monitor: All processes operating within nominal thresholds.", m_alertBannerFrame);
+    m_alertBannerText->setStyleSheet(QString("font-size: 12px; color: %1;").arg(Theme::TextSecondary));
+    bannerLayout->addWidget(m_alertBannerText, 1);
+
+    mainLayout->addWidget(m_alertBannerFrame);
 
     // 2. Metrics Cards Grid (4 columns)
     auto* cardsGrid = new QGridLayout();
@@ -137,6 +158,41 @@ void DashboardPage::updateMetrics(
 
     // Update Top Processes
     m_topProcessesTable->updateProcesses(topProcesses);
+}
+
+void DashboardPage::updateAlertStatus(const std::vector<ResourceAlert>& activeAlerts) {
+    if (!m_alertBannerFrame) return;
+
+    if (activeAlerts.empty()) {
+        m_alertBannerFrame->setStyleSheet(Theme::bannerStyleSheet(Theme::AccentGreen));
+        m_alertCountBadge->setText("● SYSTEM NOMINAL");
+        m_alertCountBadge->setStyleSheet(Theme::pillStyleSheet(Theme::BgSurfaceAlt, Theme::AccentGreen));
+        m_alertBannerText->setText("Smart Resource Monitor: All processes operating within nominal thresholds.");
+        m_alertBannerText->setStyleSheet(QString("font-size: 12px; color: %1;").arg(Theme::TextSecondary));
+    } else {
+        const auto& alert = activeAlerts.front();
+        QString borderCol = (alert.severity == AlertSeverity::Critical) ? Theme::AccentRose : Theme::AccentAmber;
+        m_alertBannerFrame->setStyleSheet(Theme::bannerStyleSheet(borderCol));
+
+        m_alertCountBadge->setText(QString("⚠ %1 ACTIVE ALERT%2")
+            .arg(activeAlerts.size())
+            .arg(activeAlerts.size() > 1 ? "S" : ""));
+        m_alertCountBadge->setStyleSheet(Theme::pillStyleSheet(Theme::BgSurfaceAlt, borderCol));
+
+        QString desc = QString("<b>%1</b> — %2 (%3)")
+            .arg(QString::fromStdString(alert.title))
+            .arg(QString::fromStdString(alert.observation))
+            .arg(QString::fromStdString(alert.suggestedAction));
+        m_alertBannerText->setText(desc);
+        m_alertBannerText->setStyleSheet(QString("font-size: 12px; color: %1;").arg(Theme::TextPrimary));
+    }
+}
+
+void DashboardPage::updateInstalledAppsCount(size_t totalApps, size_t unusedApps) {
+    if (!m_installedAppsLabel) return;
+    m_installedAppsLabel->setText(QString("Installed Apps: %1 (%2 unused)")
+        .arg(totalApps)
+        .arg(unusedApps));
 }
 
 } // namespace pulse::ui

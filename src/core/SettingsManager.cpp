@@ -2,6 +2,7 @@
 #include <QSettings>
 #include <QStandardPaths>
 #include <QDir>
+#include <QStringList>
 #include <algorithm>
 
 namespace pulse {
@@ -33,6 +34,32 @@ void SettingsManager::load() {
     if (!exportDir.isEmpty() && QDir(exportDir).exists()) {
         m_exportDirectory = exportDir.toStdString();
     }
+
+    // Smart Resource Alerts Settings
+    m_alertSettings.enableHighMemory = settings.value("Alerts/EnableHighMemory", true).toBool();
+    m_alertSettings.enableHighCpuProcess = settings.value("Alerts/EnableHighCpuProcess", true).toBool();
+    m_alertSettings.enableHeavyBackground = settings.value("Alerts/EnableHeavyBackground", true).toBool();
+    m_alertSettings.enableIdleBackground = settings.value("Alerts/EnableIdleBackground", true).toBool();
+    m_alertSettings.enableMemoryPressure = settings.value("Alerts/EnableMemoryPressure", true).toBool();
+
+    m_alertSettings.systemRamThresholdPercent = settings.value("Alerts/SystemRamThresholdPercent", 85.0).toDouble();
+    m_alertSettings.processCpuThresholdPercent = settings.value("Alerts/ProcessCpuThresholdPercent", 30.0).toDouble();
+    m_alertSettings.heavyBackgroundCpuPercent = settings.value("Alerts/HeavyBackgroundCpuPercent", 15.0).toDouble();
+    m_alertSettings.sustainedDurationSeconds = settings.value("Alerts/SustainedDurationSeconds", 15).toUInt();
+    m_alertSettings.cooldownDurationSeconds = settings.value("Alerts/CooldownDurationSeconds", 300).toUInt();
+
+    QStringList ignoreList = settings.value("Alerts/IgnoreList").toStringList();
+    if (!ignoreList.isEmpty()) {
+        m_alertSettings.ignoreList.clear();
+        for (const auto& item : ignoreList) {
+            m_alertSettings.ignoreList.push_back(item.toStdString());
+        }
+    } else {
+        m_alertSettings.ignoreList = {
+            "System", "System Idle Process", "Registry", "smss.exe", "csrss.exe",
+            "wininit.exe", "services.exe", "lsass.exe", "svchost.exe", "PulseOS.exe"
+        };
+    }
 }
 
 void SettingsManager::save() {
@@ -46,6 +73,26 @@ void SettingsManager::save() {
     settings.setValue("General/LaunchOnStartup", m_launchOnStartup);
     settings.setValue("Monitoring/HistoryBufferSize", static_cast<qulonglong>(m_historyBufferSize));
     settings.setValue("General/ExportDirectory", QString::fromStdString(m_exportDirectory));
+
+    // Smart Alerts
+    settings.setValue("Alerts/EnableHighMemory", m_alertSettings.enableHighMemory);
+    settings.setValue("Alerts/EnableHighCpuProcess", m_alertSettings.enableHighCpuProcess);
+    settings.setValue("Alerts/EnableHeavyBackground", m_alertSettings.enableHeavyBackground);
+    settings.setValue("Alerts/EnableIdleBackground", m_alertSettings.enableIdleBackground);
+    settings.setValue("Alerts/EnableMemoryPressure", m_alertSettings.enableMemoryPressure);
+
+    settings.setValue("Alerts/SystemRamThresholdPercent", m_alertSettings.systemRamThresholdPercent);
+    settings.setValue("Alerts/ProcessCpuThresholdPercent", m_alertSettings.processCpuThresholdPercent);
+    settings.setValue("Alerts/HeavyBackgroundCpuPercent", m_alertSettings.heavyBackgroundCpuPercent);
+    settings.setValue("Alerts/SustainedDurationSeconds", m_alertSettings.sustainedDurationSeconds);
+    settings.setValue("Alerts/CooldownDurationSeconds", m_alertSettings.cooldownDurationSeconds);
+
+    QStringList qIgnoreList;
+    for (const auto& item : m_alertSettings.ignoreList) {
+        qIgnoreList.append(QString::fromStdString(item));
+    }
+    settings.setValue("Alerts/IgnoreList", qIgnoreList);
+
     settings.sync();
 }
 
@@ -58,6 +105,7 @@ void SettingsManager::resetToDefaults() {
     m_launchOnStartup = false;
     m_historyBufferSize = 60;
     m_exportDirectory = QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation).toStdString();
+    m_alertSettings = AlertSettings{};
     save();
 }
 
@@ -101,5 +149,9 @@ void SettingsManager::setExportDirectory(const std::string& path) {
     save();
 }
 
-} // namespace pulse
+void SettingsManager::setAlertSettings(const AlertSettings& settings) {
+    m_alertSettings = settings;
+    save();
+}
 
+} // namespace pulse

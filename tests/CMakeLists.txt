@@ -75,6 +75,8 @@ add_executable(test_profiles_navigation
     ../src/core/PerformanceAnalyzer.cpp
     ../src/core/ReportExporter.cpp
     ../src/core/MonitoringWorker.cpp
+    ../src/core/InstalledAppManager.cpp
+    ../src/core/SmartAlertEngine.cpp
     ../src/core/strategies/CodingStrategy.cpp
     ../src/core/strategies/GamingStrategy.cpp
     ../src/core/strategies/StudyStrategy.cpp
@@ -87,8 +89,10 @@ add_executable(test_profiles_navigation
     ../src/ui/components/ProcessTableView.cpp
     ../src/ui/components/RecommendationCard.cpp
     ../src/ui/components/ActionConfirmDialog.cpp
+    ../src/ui/components/UninstallConfirmDialog.cpp
     ../src/ui/pages/DashboardPage.cpp
     ../src/ui/pages/ProcessesPage.cpp
+    ../src/ui/pages/ApplicationsPage.cpp
     ../src/ui/pages/ProfilesPage.cpp
     ../src/ui/pages/RecommendationsPage.cpp
     ../src/ui/pages/AnalysisPage.cpp
@@ -109,5 +113,31 @@ target_link_libraries(test_profiles_navigation PRIVATE
     powrprof
     version
     wtsapi32
+    advapi32
+    shell32
 )
 add_test(NAME ProfilesNavigationTest COMMAND test_profiles_navigation)
+
+# 7. Installed Application Manager Unit Test
+add_executable(test_installed_apps
+    test_installed_apps.cpp
+    ../src/core/InstalledAppManager.cpp
+)
+target_include_directories(test_installed_apps PRIVATE ../src ../src/core)
+target_link_libraries(test_installed_apps PRIVATE
+    Qt6::Core
+    advapi32
+    shell32
+)
+add_test(NAME InstalledAppsTest COMMAND test_installed_apps)
+
+# 8. Smart Resource Alerts Unit Test
+add_executable(test_smart_alerts
+    test_smart_alerts.cpp
+    ../src/core/SmartAlertEngine.cpp
+)
+target_include_directories(test_smart_alerts PRIVATE ../src ../src/core)
+target_link_libraries(test_smart_alerts PRIVATE
+    Qt6::Core
+)
+add_test(NAME SmartAlertsTest COMMAND test_smart_alerts)

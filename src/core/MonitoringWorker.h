@@ -10,6 +10,7 @@
 #include "ProcessMonitor.h"
 #include "TaskDetector.h"
 #include "RecommendationEngine.h"
+#include "SmartAlertEngine.h"
 #include "strategies/OptimizationStrategy.h"
 
 namespace pulse {
@@ -23,6 +24,7 @@ public:
                      std::shared_ptr<TaskDetector> taskDetector,
                      std::shared_ptr<RecommendationEngine> recEngine,
                      std::shared_ptr<OptimizationStrategy> initialStrategy,
+                     std::shared_ptr<SmartAlertEngine> alertEngine = nullptr,
                      QObject* parent = nullptr);
     ~MonitoringWorker() override;
 
@@ -31,6 +33,7 @@ public slots:
     void stopMonitoring();
     void setInterval(uint32_t intervalMs);
     void setActiveStrategy(std::shared_ptr<pulse::OptimizationStrategy> strategy);
+    void setAlertEngine(std::shared_ptr<pulse::SmartAlertEngine> alertEngine);
     void triggerImmediateSample();
 
 private slots:
@@ -41,6 +44,8 @@ signals:
                      const std::vector<pulse::ProcessInfo>& processes,
                      const pulse::TaskDetectionResult& detection,
                      const std::vector<pulse::Recommendation>& recommendations);
+    void alertsEvaluated(const std::vector<pulse::ResourceAlert>& activeAlerts,
+                         const std::vector<pulse::ResourceAlert>& newAlerts);
     void monitoringError(const QString& errorMessage);
 
 private:
@@ -50,6 +55,7 @@ private:
     std::shared_ptr<ProcessMonitor> m_procMonitor;
     std::shared_ptr<TaskDetector> m_taskDetector;
     std::shared_ptr<RecommendationEngine> m_recEngine;
+    std::shared_ptr<SmartAlertEngine> m_alertEngine;
 
     std::mutex m_strategyMutex;
     std::shared_ptr<OptimizationStrategy> m_activeStrategy;

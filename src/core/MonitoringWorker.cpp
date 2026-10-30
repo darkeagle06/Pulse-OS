@@ -10,12 +10,14 @@ MonitoringWorker::MonitoringWorker(
     std::shared_ptr<TaskDetector> taskDetector,
     std::shared_ptr<RecommendationEngine> recEngine,
     std::shared_ptr<OptimizationStrategy> initialStrategy,
+    std::shared_ptr<SmartAlertEngine> alertEngine,
     QObject* parent)
     : QObject(parent),
       m_sysMonitor(std::move(sysMonitor)),
       m_procMonitor(std::move(procMonitor)),
       m_taskDetector(std::move(taskDetector)),
       m_recEngine(std::move(recEngine)),
+      m_alertEngine(std::move(alertEngine)),
       m_activeStrategy(std::move(initialStrategy)) {
     logDiagnostic("[MonitoringWorker] Initialized on worker thread.");
 }
@@ -63,6 +65,10 @@ void MonitoringWorker::setActiveStrategy(std::shared_ptr<pulse::OptimizationStra
     m_activeStrategy = std::move(strategy);
 }
 
+void MonitoringWorker::setAlertEngine(std::shared_ptr<pulse::SmartAlertEngine> alertEngine) {
+    m_alertEngine = std::move(alertEngine);
+}
+
 void MonitoringWorker::triggerImmediateSample() {
     performSample();
 }
@@ -108,15 +114,27 @@ void MonitoringWorker::performSample() {
             recs = m_recEngine->generateRecommendations(sysMetrics, processes, strat);
         }
 
+        std::vector<ResourceAlert> activeAlerts;
+        std::vector<ResourceAlert> newAlerts;
+        if (m_alertEngine) {
+            auto alertPair = m_alertEngine->evaluate(sysMetrics, processes, detection);
+            activeAlerts = std::move(alertPair.first);
+            newAlerts = std::move(alertPair.second);
+        }
+
         auto tEnd = std::chrono::steady_clock::now();
         auto durationMs = std::chrono::duration_cast<std::chrono::milliseconds>(tEnd - tStart).count();
 
         logDiagnostic("[MonitoringWorker] Sample completed in " + std::to_string(durationMs) +
                       " ms (" + std::to_string(processes.size()) + " processes, " +
-                      std::to_string(recs.size()) + " recs). Emitting dataSampled...");
+                      std::to_string(recs.size()) + " recs, " +
+                      std::to_string(activeAlerts.size()) + " active alerts). Emitting...");
 
         m_isSampling.store(false);
         emit dataSampled(sysMetrics, processes, detection, recs);
+        if (m_alertEngine) {
+            emit alertsEvaluated(activeAlerts, newAlerts);
+        }
 
     } catch (const std::exception& ex) {
         m_isSampling.store(false);
